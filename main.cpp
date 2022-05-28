@@ -1,13 +1,31 @@
 #include <iostream>
 #include <random>
 #include "heap.hpp"
+#include <unordered_map>
+
+bool verifyTwoNumberListIdentical(std::vector<uint64_t> lst1, std::vector<uint64_t> lst2) {
+    auto lst1Stat = std::unordered_map<uint64_t, size_t> {};
+    auto lst2Stat = std::unordered_map<uint64_t, size_t> {};
+
+    for (auto &num : lst1) {
+        auto count = lst1Stat[num];
+        lst1Stat[num] = count + 1;
+    }
+
+    for (auto &num : lst2) {
+        auto count = lst2Stat[num];
+        lst2Stat[num] = count + 1;
+    }
+
+    return lst1Stat == lst2Stat;
+}
 
 int main() {
     std::random_device randomDevice;  //Will be used to obtain a seed for the random number engine
     std::mt19937 randomEngine(randomDevice()); //Standard mersenne_twister_engine seeded with randomDevice()
-    std::uniform_int_distribution<> distribution(1, 60);
+    std::uniform_int_distribution<> distribution(1, 600);
 
-    constexpr size_t sampleSize = 300;
+    constexpr size_t sampleSize = 3000;
     std::vector<uint64_t> nums {};
 
     while (nums.size() < sampleSize) {
@@ -17,7 +35,7 @@ int main() {
     std::cout << "Origin: ";
     printVector(nums);
 
-    auto heapPtr = std::make_unique<Heap<uint64_t>>(std::move(nums));
+    auto heapPtr = std::make_unique<Heap<uint64_t>>(std::vector<uint64_t> (nums));
 
     std::cout << "Sorted: ";
     auto sortedNums = std::vector<uint64_t> {};
@@ -27,6 +45,8 @@ int main() {
     }
 
     printVector(sortedNums);
+
+    std::cout << "Verified: " << verifyTwoNumberListIdentical(nums, sortedNums);
 
     return 0;
 }
