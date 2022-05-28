@@ -3,4 +3,4 @@ project(untitled_heao)
 
 set(CMAKE_CXX_STANDARD 23)
 
-add_executable(untitled_heao main.cpp heap.cpp heap.hpp)
+add_executable(untitled_heao main.cpp heap.hpp)
