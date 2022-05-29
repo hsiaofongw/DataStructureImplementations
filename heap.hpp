@@ -60,6 +60,9 @@ public:
     /** 检查这个堆是否是空堆，所谓空堆就是有 0 个元素的堆，并且我们约定认定空堆具备堆性 */
     [[nodiscard]] bool empty() const;
 
+    /** 返回队列长度 */
+    [[nodiscard]] size_t size() const;
+
     /** 更新比较器并且以新的比较器作为排序准则立即进行重新排序 */
     void updateComparator(const Comparator<T>& comparator);
 private:
@@ -295,6 +298,11 @@ void Heap<T>::updateComparator(const Comparator<T> &_comparator) {
 template <typename T>
 void Heap<T>::clear() {
     this->_store.clear();
+}
+
+template <typename T>
+size_t Heap<T>::size() const {
+    return this->_store.size();
 }
 
 #endif //UNTITLED_HEAO_HEAP_HPP
