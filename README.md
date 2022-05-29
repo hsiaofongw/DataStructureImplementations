@@ -6,8 +6,8 @@
 - `void pop()` 移除队列最前的元素；
 - `void insert(const T& element)` 将一个元素入列；
 - `void clear()` 清空；
-- `size_t size()` 取队列长度；
-- `bool empty()` 空性判定；
+- `size_t size() const` 取队列长度；
+- `bool empty() const` 空性判定；
 
 ## 堆
 
