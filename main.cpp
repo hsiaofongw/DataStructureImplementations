@@ -23,9 +23,9 @@ bool verifyTwoNumberListIdentical(std::vector<uint64_t> lst1, std::vector<uint64
 int main() {
     std::random_device randomDevice;  //Will be used to obtain a seed for the random number engine
     std::mt19937 randomEngine(randomDevice()); //Standard mersenne_twister_engine seeded with randomDevice()
-    std::uniform_int_distribution<> distribution(1, 600);
+    std::uniform_int_distribution<> distribution(1, 60);
 
-    constexpr size_t sampleSize = 3000;
+    constexpr size_t sampleSize = 100;
     std::vector<uint64_t> nums {};
 
     while (nums.size() < sampleSize) {
@@ -35,7 +35,10 @@ int main() {
     std::cout << "Origin: ";
     printVector(nums);
 
-    auto heapPtr = std::make_unique<Heap<uint64_t>>(std::vector<uint64_t> (nums));
+    auto heapPtr = std::make_unique<Heap<uint64_t>>(
+            std::vector<uint64_t> (nums),
+            [](const uint64_t& a, const uint64_t& b) { return a <= b; }
+    );
 
     std::cout << "Sorted: ";
     auto sortedNums = std::vector<uint64_t> {};
