@@ -33,8 +33,8 @@ using Comparator = std::function<bool (const T& a, const T& b)>;
 template <typename T>
 class Heap {
 public:
-    /** 构造一个空堆 */
-    Heap( );
+    /** 构造一个空堆，必须指定 key 的排序准则 */
+    explicit Heap(const Comparator<T>& comparator);
 
     /** 通过堆化一个 std::vector<T> 实例建立堆，并且使用传入的自定义比较器对各个 key 进行比较 */
     Heap(std::vector<T>&& heapStorageArray, const Comparator<T>& comparator);
@@ -49,16 +49,16 @@ public:
     void insert(const T& key);
 
     /** 查看堆顶部的元素 */
-    T top();
+    T top() const;
 
-    /** 弹出堆顶部堆元素，并且在弹出后立即恢复堆性 */
+    /** 弹出堆顶部堆元素，并且在弹出后立即着手进行堆性的恢复操作 */
     void pop();
+
+    /** 清除堆的所有元素 */
+    void clear();
 
     /** 检查这个堆是否是空堆，所谓空堆就是有 0 个元素的堆，并且我们约定认定空堆具备堆性 */
     [[nodiscard]] bool empty() const;
-
-    /** 获得对存储空间对只读引用 */
-    const std::vector<T>& getStorage();
 
     /** 更新比较器并且以新的比较器作为排序准则立即进行重新排序 */
     void updateComparator(const Comparator<T>& comparator);
@@ -105,7 +105,8 @@ private:
 
 
 template <typename T>
-Heap<T>::Heap() : _store(std::vector<T> {}) { }
+Heap<T>::Heap(const Comparator<T>& _comparator)
+: comparator(_comparator), _store(std::vector<T> {}) { }
 
 template <typename T>
 void Heap<T>::insert(const T &key) {
@@ -195,7 +196,7 @@ template <typename T>
 Heap<T>::Heap(Heap<T> &&rhs) noexcept : _store(std::move(rhs._store)) { }
 
 template <typename T>
-T Heap<T>::top() {
+T Heap<T>::top() const {
     return static_cast<T>(this->_store[0]);
 }
 
@@ -266,11 +267,6 @@ std::unique_ptr<size_t> Heap<T>::_findHeapPropertyViolation(size_t nodeOffset) {
 }
 
 template <typename T>
-const std::vector<T> &Heap<T>::getStorage() {
-    return this->_store;
-}
-
-template <typename T>
 bool Heap<T>::compareGreaterThanOrEqual(size_t lhsNodeOffset, size_t rhsNodeOffset) const {
     return this->comparator(this->_store[lhsNodeOffset], this->_store[rhsNodeOffset]);
 }
@@ -294,6 +290,11 @@ template <typename T>
 void Heap<T>::updateComparator(const Comparator<T> &_comparator) {
     this->comparator = _comparator;
     this->fullReHeapify();
+}
+
+template <typename T>
+void Heap<T>::clear() {
+    this->_store.clear();
 }
 
 #endif //UNTITLED_HEAO_HEAP_HPP
