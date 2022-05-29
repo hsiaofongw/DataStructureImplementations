@@ -3,7 +3,7 @@
 #include "heap.hpp"
 #include <unordered_map>
 
-bool verifyTwoNumberListIdentical(std::vector<uint64_t> lst1, std::vector<uint64_t> lst2) {
+bool verifyTwoNumberListIdentical(const std::vector<uint64_t>& lst1, const std::vector<uint64_t>& lst2) {
     auto lst1Stat = std::unordered_map<uint64_t, size_t> {};
     auto lst2Stat = std::unordered_map<uint64_t, size_t> {};
 
