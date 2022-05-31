@@ -63,27 +63,15 @@ namespace BST {
 
         explicit BSTHandle(NodePtr nodePtr);
 
-        NodePtr get();
-
-        [[nodiscard]] size_t size() const;
-
-        void insert(const KeyPtr& keyPtr, const ValuePtr& valuePtr);
-
         static size_t size(const NodePtr& nodePtr);
 
         static void insert(NodePtr& nodePtr, const KeyPtr &keyPtr, const ValuePtr &valuePtr);
 
         static BST::ValuePtr<ValueType> search(const NodePtr& nodePtr, const KeyPtr &keyPtr);
 
-        BST::ValuePtr<ValueType> search(const KeyPtr &keyPtr);
-
         static BST::NodePtr<KeyType, ValueType> min(const NodePtr& nodePtr);
 
         static BST::NodePtr<KeyType, ValueType> max(const NodePtr& nodePtr);
-
-        BST::NodePtr<KeyType, ValueType> min() const;
-
-        BST::NodePtr<KeyType, ValueType> max() const;
 
         static void deleteMin(NodePtr& nodePtr);
 
@@ -92,6 +80,18 @@ namespace BST {
         static void deleteMax(NodePtr& nodePtr);
 
         static void deleteMaxWithNodeKey(NodePtr& nodePtr, const NodePtr& nodeKey);
+
+        NodePtr get();
+
+        [[nodiscard]] size_t size() const;
+
+        void insert(const KeyPtr& keyPtr, const ValuePtr& valuePtr);
+
+        BST::ValuePtr<ValueType> search(const KeyPtr &keyPtr);
+
+        BST::NodePtr<KeyType, ValueType> min() const;
+
+        BST::NodePtr<KeyType, ValueType> max() const;
 
         void deleteMin();
 
