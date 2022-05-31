@@ -36,7 +36,7 @@ public:
     /** 构造一个空堆，必须指定 key 的排序准则 */
     explicit Heap(const Comparator<T>& comparator);
 
-    /** 通过堆化一个 std::vector<T> 实例建立堆，并且使用传入的自定义比较器对各个 key 进行比较 */
+    /** 通过堆化一个 std::vector<KeyType> 实例建立堆，并且使用传入的自定义比较器对各个 key 进行比较 */
     Heap(std::vector<T>&& heapStorageArray, const Comparator<T>& comparator);
 
     /** 不允许复制 */

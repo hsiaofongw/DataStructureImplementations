@@ -3,4 +3,4 @@ project(PriorityQueueImplementations)
 
 set(CMAKE_CXX_STANDARD 23)
 
-add_executable(entry main.cpp heap.hpp)
+add_executable(entry main.cpp heap.hpp BinarySearchTree.hpp)

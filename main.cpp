@@ -1,6 +1,7 @@
 #include <iostream>
 #include <random>
 #include "heap.hpp"
+#include "BinarySearchTree.hpp"
 #include <unordered_map>
 
 bool verifyTwoNumberListIdentical(const std::vector<uint64_t>& lst1, const std::vector<uint64_t>& lst2) {
