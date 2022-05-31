@@ -52,6 +52,7 @@ int main() {
     std::for_each(std::begin(testData), std::end(testData), [&handlePtr](auto pair) {
         auto keyPtr = std::make_shared<std::string>(pair.first);
         auto floorNodePtr = handlePtr->floor(keyPtr);
+        auto ceilNodePtr = handlePtr->ceil(keyPtr);
 
         std::cout << "floor(" << (*keyPtr) << ") = ";
         if (!floorNodePtr) {
@@ -59,6 +60,14 @@ int main() {
         }
         else {
             std::cout << (*floorNodePtr->keyPtr);
+        }
+        std::cout << ", ";
+        std::cout << "ceil(" << (*keyPtr) << ") = ";
+        if (!ceilNodePtr) {
+            std::cout << "(nil)";
+        }
+        else {
+            std::cout << (*ceilNodePtr->keyPtr);
         }
         std::cout << "\n";
     });

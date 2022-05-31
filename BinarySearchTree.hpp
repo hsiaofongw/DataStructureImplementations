@@ -52,7 +52,15 @@ namespace BST {
     }
 
     template<Comparable KeyType, typename ValueType>
-    NodePtr<KeyType, ValueType> updateFloorCandidate(NodePtr<KeyType, ValueType> current, NodePtr<KeyType, ValueType> candidate, KeyPtr<KeyType> keyPtr) {
+    NodePtr<KeyType, ValueType> updateBoundary(
+            NodePtr<KeyType, ValueType> current,
+            NodePtr<KeyType, ValueType> candidate,
+            KeyPtr<KeyType> keyPtr,
+            std::function<NodePtr<KeyType, ValueType> (NodePtr<KeyType, ValueType>)> tryBetterGuess,
+            std::function<NodePtr<KeyType, ValueType> (NodePtr<KeyType, ValueType>)> tryWorseGuess,
+            std::function<bool (const KeyType& currentKey, const KeyType& candidateKey)> outOfCandidateCriterion,
+            std::function<bool (const KeyType& currentKey, const KeyType& upperBound)> outOfBoundCriterion
+    ) {
         if (!current) {
             return candidate;
         }
@@ -62,28 +70,53 @@ namespace BST {
 
         if (!candidate) {
             // there is no candidate yet.
-            if (currentKey < upperBound) {
-                return updateFloorCandidate(current, current, keyPtr);
+            if (outOfBoundCriterion(currentKey, upperBound)) {
+                return updateBoundary(tryWorseGuess(current), candidate, keyPtr, tryBetterGuess, tryWorseGuess, outOfCandidateCriterion, outOfBoundCriterion);
             }
             else {
-                return updateFloorCandidate(current->leftPtr, candidate, keyPtr);
+                return updateBoundary(current, current, keyPtr, tryBetterGuess, tryWorseGuess, outOfCandidateCriterion, outOfBoundCriterion);
             }
         }
 
         const KeyType& candidateKey = *candidate->keyPtr;
 
-
-        if (currentKey < candidateKey || currentKey == candidateKey) {
+        if (outOfCandidateCriterion(currentKey, candidateKey)) {
             // currentKey in (-infinity, candidateKey]
-            return updateFloorCandidate(current->rightPtr, candidate, keyPtr);
+            return updateBoundary(tryBetterGuess(current), candidate, keyPtr, tryBetterGuess, tryWorseGuess, outOfCandidateCriterion, outOfBoundCriterion);
         }
-        else if (currentKey > upperBound || currentKey == upperBound) {
+        else if (outOfBoundCriterion(currentKey, upperBound)) {
             // currentKey in [upperBound, +infinity)
-            return updateFloorCandidate(current->leftPtr, candidate, keyPtr);
+            return updateBoundary(tryWorseGuess(current), candidate, keyPtr, tryBetterGuess, tryWorseGuess, outOfCandidateCriterion, outOfBoundCriterion);
         } else {
             // currentKey in (candidateKey, upperBound)
-            return updateFloorCandidate(current->rightPtr, current, keyPtr);
+            return updateBoundary(tryBetterGuess(current), current, keyPtr, tryBetterGuess, tryWorseGuess, outOfCandidateCriterion, outOfBoundCriterion);
         }
+    }
+
+    template<Comparable KeyType, typename ValueType>
+    NodePtr<KeyType, ValueType> updateFloorCandidate(NodePtr<KeyType, ValueType> current, NodePtr<KeyType, ValueType> candidate, KeyPtr<KeyType> keyPtr) {
+        return updateBoundary<KeyType, ValueType>(
+                current,
+                candidate,
+                keyPtr,
+                [](NodePtr<KeyType, ValueType> nodePtr) { return nodePtr->rightPtr; },
+                [](NodePtr<KeyType, ValueType> nodePtr) { return nodePtr->leftPtr; },
+                [](const KeyType& currentKey, const KeyType& candidateKey) { return currentKey < candidateKey || currentKey == candidateKey; },
+                [](const KeyType& currentKey, const KeyType& boundKey) { return currentKey > boundKey || currentKey == boundKey; }
+        );
+    }
+
+    template<Comparable KeyType, typename ValueType>
+    NodePtr<KeyType, ValueType> updateCeilCandidate(NodePtr<KeyType, ValueType> current, NodePtr<KeyType, ValueType> candidate, KeyPtr<KeyType> keyPtr) {
+        return updateBoundary<KeyType, ValueType>(
+                current,
+                candidate,
+                keyPtr,
+                [](NodePtr<KeyType, ValueType> nodePtr) { return nodePtr->leftPtr; },
+                [](NodePtr<KeyType, ValueType> nodePtr) { return nodePtr->rightPtr; },
+                [](const KeyType& currentKey, const KeyType& candidateKey) { return currentKey > candidateKey || currentKey == candidateKey; },
+                [](const KeyType& currentKey, const KeyType& boundKey) { return currentKey < boundKey || currentKey == boundKey; }
+        );
     }
 
     /** 二叉搜索树句柄类，一个 ::BST::BSTHandle 实例可以用来操纵一个 ::BST::BSTNode 实例 */
@@ -120,6 +153,9 @@ namespace BST {
         /** 对 key 下取整，返回那个 key 对应的最大的不超过它的 key 对应的节点指针 */
         static BST::NodePtr<KeyType, ValueType> floor(const NodePtr& currentNodePtr, const KeyPtr &keyPtr);
 
+        /** 对 key 上取整，返回那个 key 对应的最大的不小于它的 key 对应的节点指针 */
+        static BST::NodePtr<KeyType, ValueType> ceil(const NodePtr& currentNodePtr, const KeyPtr &keyPtr);
+
         NodePtr get();
 
         [[nodiscard]] size_t size() const;
@@ -145,6 +181,8 @@ namespace BST {
         void reset(NodePtr nodePtr);
 
         BST::NodePtr<KeyType, ValueType> floor(const KeyPtr &keyPtr) const;
+
+        BST::NodePtr<KeyType, ValueType> ceil(const KeyPtr &keyPtr) const;
     private:
         NodePtr nodePtr;
     };
@@ -331,6 +369,17 @@ namespace BST {
     template<Comparable KeyType, typename ValueType>
     NodePtr<KeyType, ValueType> BSTHandle<KeyType, ValueType>::floor(const KeyPtr &keyPtr) const {
         return BSTHandle<KeyType, ValueType>::floor(this->nodePtr, keyPtr);
+    }
+
+    template<Comparable KeyType, typename ValueType>
+    NodePtr<KeyType, ValueType>
+    BSTHandle<KeyType, ValueType>::ceil(const NodePtr &currentNodePtr, const KeyPtr &keyPtr) {
+        return updateCeilCandidate(currentNodePtr, makeNil<KeyType, ValueType>(), keyPtr);
+    }
+
+    template<Comparable KeyType, typename ValueType>
+    NodePtr<KeyType, ValueType> BSTHandle<KeyType, ValueType>::ceil(const KeyPtr &keyPtr) const {
+        return BSTHandle<KeyType, ValueType>::ceil(this->nodePtr, keyPtr);
     }
 }
 
