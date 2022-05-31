@@ -66,6 +66,9 @@ namespace BST {
 
         static void insert(NodePtr& nodePtr, const KeyPtr &keyPtr, const ValuePtr &valuePtr);
 
+        static BST::ValuePtr<ValueType> search(const NodePtr& nodePtr, const KeyPtr &keyPtr);
+
+        BST::ValuePtr<ValueType> search(const KeyPtr &keyPtr);
     private:
         NodePtr nodePtr;
     };
@@ -119,6 +122,29 @@ namespace BST {
     template<Comparable KeyType, typename ValueType>
     void BSTHandle<KeyType, ValueType>::insert(const KeyPtr &keyPtr, const ValuePtr &valuePtr) {
         BSTHandle<KeyType, ValueType>::insert(this->nodePtr, keyPtr, valuePtr);
+    }
+
+    template<Comparable KeyType, typename ValueType>
+    ValuePtr<ValueType> BSTHandle<KeyType, ValueType>::search(const NodePtr &nodePtr, const KeyPtr &keyPtr) {
+        auto nil = BST::ValuePtr<ValueType> {};
+        if (!nodePtr) {
+            return nil;
+        }
+
+        const KeyType& lhs = *keyPtr;
+        const KeyType& rhs = *nodePtr->keyPtr;
+        if (lhs > rhs) {
+            return BSTHandle<KeyType, ValueType>::search(nodePtr->rightPtr);
+        } else if (lhs < rhs) {
+            return BSTHandle<KeyType, ValueType>::search(nodePtr->leftPtr);
+        } else {
+            return nodePtr->valuePtr;
+        }
+    }
+
+    template<Comparable KeyType, typename ValueType>
+    ValuePtr<ValueType> BSTHandle<KeyType, ValueType>::search(const KeyPtr &keyPtr) {
+        return BSTHandle<KeyType, ValueType>::search(this->nodePtr, keyPtr);
     }
 }
 
