@@ -50,9 +50,9 @@ int main() {
     });
 
     while (!handlePtr->empty()) {
-        auto minNodePtr = handlePtr->min();
+        auto minNodePtr = handlePtr->max();
         std::cout << "read: " << "key: " << (*minNodePtr->keyPtr) << ", value: " << (*minNodePtr->valuePtr) << "\n";
-        handlePtr->deleteMin();
+        handlePtr->deleteMax();
     }
 
 //    std::random_device randomDevice;  //Will be used to obtain a seed for the random number engine

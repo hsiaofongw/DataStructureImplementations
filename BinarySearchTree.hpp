@@ -39,11 +39,13 @@ namespace BST {
         NodePtr<KeyType, ValueType> rightPtr;
     };
 
+    /** 返回一个指向空节点的指针 */
     template <Comparable KeyType, typename ValueType>
     decltype(auto) makeEmptyNode() {
         return std::make_shared<BSTNode<KeyType, ValueType>>();
     }
 
+    /** 返回一个空指针 */
     template <Comparable KeyType, typename ValueType>
     decltype(auto) makeNil() {
         return std::shared_ptr<BSTNode<KeyType, ValueType>> {};
@@ -77,13 +79,23 @@ namespace BST {
 
         static BST::NodePtr<KeyType, ValueType> min(const NodePtr& nodePtr);
 
-        BST::NodePtr<KeyType, ValueType> min();
+        static BST::NodePtr<KeyType, ValueType> max(const NodePtr& nodePtr);
+
+        BST::NodePtr<KeyType, ValueType> min() const;
+
+        BST::NodePtr<KeyType, ValueType> max() const;
 
         static void deleteMin(NodePtr& nodePtr);
 
         static void deleteMinWithNodeKey(NodePtr& nodePtr, const NodePtr& nodeKey);
 
+        static void deleteMax(NodePtr& nodePtr);
+
+        static void deleteMaxWithNodeKey(NodePtr& nodePtr, const NodePtr& nodeKey);
+
         void deleteMin();
+
+        void deleteMax();
 
         [[nodiscard]] bool empty() const;
     private:
@@ -166,19 +178,19 @@ namespace BST {
 
     template<Comparable KeyType, typename ValueType>
     NodePtr<KeyType, ValueType> BSTHandle<KeyType, ValueType>::min(const NodePtr &_nodePtr) {
-        if (!_nodePtr) {
-            return _nodePtr;
+        if (_nodePtr) {
+            if (!_nodePtr->leftPtr) {
+                return _nodePtr;
+            }
+
+            return BSTHandle<KeyType, ValueType>::min(_nodePtr->leftPtr);
         }
 
-        if (!_nodePtr->leftPtr) {
-            return _nodePtr;
-        }
-
-        return BSTHandle<KeyType, ValueType>::min(_nodePtr->leftPtr);
+        return _nodePtr;
     }
 
     template<Comparable KeyType, typename ValueType>
-    NodePtr<KeyType, ValueType> BSTHandle<KeyType, ValueType>::min() {
+    NodePtr<KeyType, ValueType> BSTHandle<KeyType, ValueType>::min() const {
         return BSTHandle<KeyType, ValueType>::min(this->nodePtr);
     }
 
@@ -212,6 +224,51 @@ namespace BST {
 
             BSTHandle<KeyType, ValueType>::deleteMinWithNodeKey(nodePtr->leftPtr, nodeKey);
         }
+    }
+
+    template<Comparable KeyType, typename ValueType>
+    NodePtr<KeyType, ValueType> BSTHandle<KeyType, ValueType>::max(const NodePtr &_nodePtr) {
+        if (_nodePtr) {
+            if (!_nodePtr->rightPtr) {
+                return _nodePtr;
+            }
+
+            return  BSTHandle<KeyType, ValueType>::max(_nodePtr->rightPtr);
+        }
+
+        return _nodePtr;
+    }
+
+    template<Comparable KeyType, typename ValueType>
+    void BSTHandle<KeyType, ValueType>::deleteMax(NodePtr &_nodePtr) {
+        auto maxKey = BSTHandle<KeyType, ValueType>::max(_nodePtr);
+        BSTHandle<KeyType, ValueType>::deleteMaxWithNodeKey(_nodePtr, maxKey);
+    }
+
+    template<Comparable KeyType, typename ValueType>
+    void BSTHandle<KeyType, ValueType>::deleteMaxWithNodeKey(NodePtr &_nodePtr, const NodePtr &_nodeKey) {
+        if (_nodePtr && _nodeKey) {
+            if (_nodePtr == _nodeKey) {
+                if (_nodePtr->leftPtr) {
+                    _nodePtr = _nodePtr->leftPtr;
+                } else {
+                    _nodePtr = makeNil<KeyType, ValueType>();
+                }
+                return;
+            }
+
+            BSTHandle<KeyType, ValueType>::deleteMaxWithNodeKey(_nodePtr->rightPtr, _nodeKey);
+        }
+    }
+
+    template<Comparable KeyType, typename ValueType>
+    NodePtr<KeyType, ValueType> BSTHandle<KeyType, ValueType>::max() const {
+        return BSTHandle<KeyType, ValueType>::max(this->nodePtr);
+    }
+
+    template<Comparable KeyType, typename ValueType>
+    void BSTHandle<KeyType, ValueType>::deleteMax() {
+        BSTHandle<KeyType, ValueType>::deleteMax(this->nodePtr);
     }
 }
 
