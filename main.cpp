@@ -49,11 +49,26 @@ int main() {
         handlePtr->insert(strPtr, valPtr);
     });
 
-    while (!handlePtr->empty()) {
-        auto minNodePtr = handlePtr->max();
-        std::cout << "read: " << "key: " << (*minNodePtr->keyPtr) << ", value: " << (*minNodePtr->valuePtr) << "\n";
-        handlePtr->deleteMax();
-    }
+    std::for_each(std::begin(testData), std::end(testData), [&handlePtr](auto pair) {
+        auto keyPtr = std::make_shared<std::string>(pair.first);
+        auto floorNodePtr = handlePtr->floor(keyPtr);
+
+        std::cout << "floor(" << (*keyPtr) << ") = ";
+        if (!floorNodePtr) {
+            std::cout << "(nil)";
+        }
+        else {
+            std::cout << (*floorNodePtr->keyPtr);
+        }
+        std::cout << "\n";
+    });
+
+//    while (!handlePtr->empty()) {
+//        auto minNodePtr = handlePtr->max();
+//        std::cout << "read: " << "key: " << (*minNodePtr->keyPtr) << ", value: " << (*minNodePtr->valuePtr) << "\n";
+//        handlePtr->deleteMax();
+//    }
+
 
 //    std::random_device randomDevice;  //Will be used to obtain a seed for the random number engine
 //    std::mt19937 randomEngine(randomDevice()); //Standard mersenne_twister_engine seeded with randomDevice()
