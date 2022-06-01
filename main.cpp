@@ -54,14 +54,30 @@ int main() {
             [](const auto& root) {
                     std::cout << "key: " << (*root->keyPtr) << ", value: " << (*root->valuePtr) << "\n";
                 },
-            [](const auto& nodePtr) -> bool{ return true;  }
+            [](const auto& nodePtr) -> bool { return true;  }
     );
+
     std::cout << "PostOrder: \n";
     handlePtr->traversePostOrder(
             [](const auto& root) {
                 std::cout << "key: " << (*root->keyPtr) << ", value: " << (*root->valuePtr) << "\n";
             },
-            [](const auto& nodePtr) -> bool{ return true;  }
+            [](const auto& nodePtr) -> bool { return true;  }
+    );
+
+    std::cout << "Between E and R, inclusively: \n";
+    auto lb = std::string { "E" };
+    auto ub = std::string { "R" };
+    auto rangePoint = BST::rangeSearchOne(handlePtr->get(), lb, ub);
+    handlePtr->reset(rangePoint);
+    handlePtr->traversePostOrder(
+            [](const auto& root) {
+                auto key = *root->keyPtr;
+                if (key < "E" || key > "R") { } else {
+                    std::cout << "key: " << (*root->keyPtr) << ", value: " << (*root->valuePtr) << "\n";
+                }
+            },
+            [](const auto& nodePtr) -> bool { return true; }
     );
 
     std::for_each(std::begin(testData), std::end(testData), [&handlePtr](auto pair) {

@@ -123,17 +123,17 @@ namespace BST {
     void traversePreOrder(
             const NodePtr<KeyType, ValueType>& root,
             std::function<void (const NodePtr<KeyType, ValueType>& root)> fn,
-            std::function<bool (const NodePtr<KeyType, ValueType>& nodePtr)> predicate
+            std::function<bool (const NodePtr<KeyType, ValueType>& nodePtr)> enterPredicate
     ) {
-        if (root && predicate(root)) {
+        if (root && enterPredicate(root)) {
             if (root->leftPtr) {
-                traversePreOrder(root->leftPtr, fn, predicate);
+                traversePreOrder(root->leftPtr, fn, enterPredicate);
             }
 
             fn(root);
 
             if (root->rightPtr) {
-                traversePreOrder(root->rightPtr, fn, predicate);
+                traversePreOrder(root->rightPtr, fn, enterPredicate);
             }
         }
     }
@@ -142,19 +142,35 @@ namespace BST {
     void traversePostOrder(
             const NodePtr<KeyType, ValueType>& root,
             std::function<void (const NodePtr<KeyType, ValueType>& root)> fn,
-            std::function<bool (const NodePtr<KeyType, ValueType>& nodePtr)> predicate
+            std::function<bool (const NodePtr<KeyType, ValueType>& nodePtr)> enterPredicate
     ) {
-        if (root && predicate(root)) {
+        if (root && enterPredicate(root)) {
             if (root->rightPtr) {
-                traversePostOrder(root->rightPtr, fn, predicate);
+                traversePostOrder(root->rightPtr, fn, enterPredicate);
             }
 
             fn(root);
 
             if (root->leftPtr) {
-                traversePostOrder(root->leftPtr, fn, predicate);
+                traversePostOrder(root->leftPtr, fn, enterPredicate);
             }
         }
+    }
+
+    template<Comparable KeyType, typename ValueType>
+    NodePtr<KeyType, ValueType> rangeSearchOne(NodePtr<KeyType, ValueType> root, const KeyType& lowerBound, const KeyType& upperBound) {
+        if (root) {
+            const KeyType& key = *root->keyPtr;
+            if (key < lowerBound) {
+                return rangeSearchOne(root->rightPtr, lowerBound, upperBound);
+            } else if (key > upperBound) {
+                return rangeSearchOne(root->leftPtr, lowerBound, upperBound);
+            } else {
+                return root;
+            }
+        }
+
+        return root;
     }
 
     /** 二叉搜索树句柄类，一个 ::BST::BSTHandle 实例可以用来操纵一个 ::BST::BSTNode 实例 */
