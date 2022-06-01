@@ -119,6 +119,44 @@ namespace BST {
         );
     }
 
+    template<Comparable KeyType, typename ValueType>
+    void traversePreOrder(
+            const NodePtr<KeyType, ValueType>& root,
+            std::function<void (const NodePtr<KeyType, ValueType>& root)> fn,
+            std::function<bool (const NodePtr<KeyType, ValueType>& nodePtr)> predicate
+    ) {
+        if (root && predicate(root)) {
+            if (root->leftPtr) {
+                traversePreOrder(root->leftPtr, fn, predicate);
+            }
+
+            fn(root);
+
+            if (root->rightPtr) {
+                traversePreOrder(root->rightPtr, fn, predicate);
+            }
+        }
+    }
+
+    template<Comparable KeyType, typename ValueType>
+    void traversePostOrder(
+            const NodePtr<KeyType, ValueType>& root,
+            std::function<void (const NodePtr<KeyType, ValueType>& root)> fn,
+            std::function<bool (const NodePtr<KeyType, ValueType>& nodePtr)> predicate
+    ) {
+        if (root && predicate(root)) {
+            if (root->rightPtr) {
+                traversePostOrder(root->rightPtr, fn, predicate);
+            }
+
+            fn(root);
+
+            if (root->leftPtr) {
+                traversePostOrder(root->leftPtr, fn, predicate);
+            }
+        }
+    }
+
     /** 二叉搜索树句柄类，一个 ::BST::BSTHandle 实例可以用来操纵一个 ::BST::BSTNode 实例 */
     template<Comparable KeyType, typename ValueType>
     class BSTHandle {
@@ -149,6 +187,18 @@ namespace BST {
         static void deleteMax(NodePtr& nodePtr);
 
         static void deleteMaxWithNodeKey(NodePtr& nodePtr, const NodePtr& nodeKey);
+
+        static void traversePreOrder(
+                const NodePtr& root,
+                std::function<void (const NodePtr& root)> fn,
+                std::function<bool (const NodePtr& nodePtr)> predicate
+        );
+
+        static void traversePostOrder(
+                const NodePtr& root,
+                std::function<void (const NodePtr& root)> fn,
+                std::function<bool (const NodePtr& nodePtr)> predicate
+        );
 
         /** 对 key 下取整，返回那个 key 对应的最大的不超过它的 key 对应的节点指针 */
         static BST::NodePtr<KeyType, ValueType> floor(const NodePtr& currentNodePtr, const KeyPtr &keyPtr);
@@ -183,6 +233,16 @@ namespace BST {
         BST::NodePtr<KeyType, ValueType> floor(const KeyPtr &keyPtr) const;
 
         BST::NodePtr<KeyType, ValueType> ceil(const KeyPtr &keyPtr) const;
+
+        void traversePreOrder(
+                std::function<void (const NodePtr& root)> fn,
+                std::function<bool (const NodePtr& nodePtr)> predicate
+        );
+
+        void traversePostOrder(
+                std::function<void (const NodePtr& root)> fn,
+                std::function<bool (const NodePtr& nodePtr)> predicate
+        );
     private:
         NodePtr nodePtr;
     };
@@ -380,6 +440,30 @@ namespace BST {
     template<Comparable KeyType, typename ValueType>
     NodePtr<KeyType, ValueType> BSTHandle<KeyType, ValueType>::ceil(const KeyPtr &keyPtr) const {
         return BSTHandle<KeyType, ValueType>::ceil(this->nodePtr, keyPtr);
+    }
+
+    template<Comparable KeyType, typename ValueType>
+    void BSTHandle<KeyType, ValueType>::traversePreOrder(const NodePtr &root, std::function<void(const NodePtr &)> fn,
+                                                         std::function<bool(const NodePtr &)> predicate) {
+        BST::traversePreOrder(root, fn, predicate);
+    }
+
+    template<Comparable KeyType, typename ValueType>
+    void BSTHandle<KeyType, ValueType>::traversePostOrder(const NodePtr &root, std::function<void(const NodePtr &)> fn,
+                                                          std::function<bool(const NodePtr &)> predicate) {
+        BST::traversePostOrder(root, fn, predicate);
+    }
+
+    template<Comparable KeyType, typename ValueType>
+    void BSTHandle<KeyType, ValueType>::traversePreOrder(std::function<void(const NodePtr &)> fn,
+                                                         std::function<bool(const NodePtr &)> predicate) {
+        BSTHandle<KeyType, ValueType>::traversePreOrder(this->nodePtr, fn, predicate);
+    }
+
+    template<Comparable KeyType, typename ValueType>
+    void BSTHandle<KeyType, ValueType>::traversePostOrder(std::function<void(const NodePtr &)> fn,
+                                                          std::function<bool(const NodePtr &)> predicate) {
+        BSTHandle<KeyType, ValueType>::traversePostOrder(this->nodePtr, fn, predicate);
     }
 }
 

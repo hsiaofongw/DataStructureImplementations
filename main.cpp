@@ -49,6 +49,21 @@ int main() {
         handlePtr->insert(strPtr, valPtr);
     });
 
+    std::cout << "PreOrder: \n";
+    handlePtr->traversePreOrder(
+            [](const auto& root) {
+                    std::cout << "key: " << (*root->keyPtr) << ", value: " << (*root->valuePtr) << "\n";
+                },
+            [](const auto& nodePtr) -> bool{ return true;  }
+    );
+    std::cout << "PostOrder: \n";
+    handlePtr->traversePostOrder(
+            [](const auto& root) {
+                std::cout << "key: " << (*root->keyPtr) << ", value: " << (*root->valuePtr) << "\n";
+            },
+            [](const auto& nodePtr) -> bool{ return true;  }
+    );
+
     std::for_each(std::begin(testData), std::end(testData), [&handlePtr](auto pair) {
         auto keyPtr = std::make_shared<std::string>(pair.first);
         auto floorNodePtr = handlePtr->floor(keyPtr);
