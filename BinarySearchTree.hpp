@@ -120,45 +120,7 @@ namespace BST {
     }
 
     template<Comparable KeyType, typename ValueType>
-    void traversePreOrder(
-            const NodePtr<KeyType, ValueType>& root,
-            std::function<void (const NodePtr<KeyType, ValueType>& root)> fn,
-            std::function<bool (const NodePtr<KeyType, ValueType>& nodePtr)> enterPredicate
-    ) {
-        if (root && enterPredicate(root)) {
-            if (root->leftPtr) {
-                traversePreOrder(root->leftPtr, fn, enterPredicate);
-            }
-
-            fn(root);
-
-            if (root->rightPtr) {
-                traversePreOrder(root->rightPtr, fn, enterPredicate);
-            }
-        }
-    }
-
-    template<Comparable KeyType, typename ValueType>
-    void traversePostOrder(
-            const NodePtr<KeyType, ValueType>& root,
-            std::function<void (const NodePtr<KeyType, ValueType>& root)> fn,
-            std::function<bool (const NodePtr<KeyType, ValueType>& nodePtr)> enterPredicate
-    ) {
-        if (root && enterPredicate(root)) {
-            if (root->rightPtr) {
-                traversePostOrder(root->rightPtr, fn, enterPredicate);
-            }
-
-            fn(root);
-
-            if (root->leftPtr) {
-                traversePostOrder(root->leftPtr, fn, enterPredicate);
-            }
-        }
-    }
-
-    template<Comparable KeyType, typename ValueType>
-    NodePtr<KeyType, ValueType> rangeSearchOne(NodePtr<KeyType, ValueType> root, const KeyType& lowerBound, const KeyType& upperBound) {
+    NodePtr<KeyType, ValueType> rangeSearchOne(const NodePtr<KeyType, ValueType>& root, const KeyType& lowerBound, const KeyType& upperBound) {
         if (root) {
             const KeyType& key = *root->keyPtr;
             if (key < lowerBound) {
@@ -459,15 +421,41 @@ namespace BST {
     }
 
     template<Comparable KeyType, typename ValueType>
-    void BSTHandle<KeyType, ValueType>::traversePreOrder(const NodePtr &root, std::function<void(const NodePtr &)> fn,
-                                                         std::function<bool(const NodePtr &)> predicate) {
-        BST::traversePreOrder(root, fn, predicate);
+    void BSTHandle<KeyType, ValueType>::traversePreOrder(
+            const NodePtr &root,
+            std::function<void(const NodePtr &)> fn,
+            std::function<bool(const NodePtr &)> predicate
+    ) {
+        if (root && predicate(root)) {
+            if (root->leftPtr) {
+                BSTHandle<KeyType, ValueType>::traversePreOrder(root->leftPtr, fn, predicate);
+            }
+
+            fn(root);
+
+            if (root->rightPtr) {
+                BSTHandle<KeyType, ValueType>::traversePreOrder(root->rightPtr, fn, predicate);
+            }
+        }
     }
 
     template<Comparable KeyType, typename ValueType>
-    void BSTHandle<KeyType, ValueType>::traversePostOrder(const NodePtr &root, std::function<void(const NodePtr &)> fn,
-                                                          std::function<bool(const NodePtr &)> predicate) {
-        BST::traversePostOrder(root, fn, predicate);
+    void BSTHandle<KeyType, ValueType>::traversePostOrder(
+            const NodePtr &root,
+            std::function<void(const NodePtr &)> fn,
+            std::function<bool(const NodePtr &)> predicate
+    ) {
+        if (root && predicate(root)) {
+            if (root->leftPtr) {
+                BSTHandle<KeyType, ValueType>::traversePostOrder(root->rightPtr, fn, predicate);
+            }
+
+            fn(root);
+
+            if (root->rightPtr) {
+                BSTHandle<KeyType, ValueType>::traversePostOrder(root->leftPtr, fn, predicate);
+            }
+        }
     }
 
     template<Comparable KeyType, typename ValueType>

@@ -66,19 +66,39 @@ int main() {
     );
 
     std::cout << "Between E and R, inclusively: \n";
+
+    // 定义下确界为 "E", 闭区间的左端点是 "E"
     auto lb = std::string { "E" };
+
+    // 定义上确界为 "R", 闭区间的右端点是 "R"
     auto ub = std::string { "R" };
-    auto rangePoint = BST::rangeSearchOne(handlePtr->get(), lb, ub);
-    handlePtr->reset(rangePoint);
-    handlePtr->traversePostOrder(
-            [](const auto& root) {
-                auto key = *root->keyPtr;
-                if (key < "E" || key > "R") { } else {
-                    std::cout << "key: " << (*root->keyPtr) << ", value: " << (*root->valuePtr) << "\n";
-                }
-            },
+
+    // lb 和 ub 一起，定义了一个闭区间 ["E", "R"]
+
+    // 我们要在树中找到一个节点 Px, 满足 Px in [E, R]
+    auto midPoint = BST::rangeSearchOne(handlePtr->get(), lb, ub);
+    auto temp = handlePtr->get();
+    handlePtr->reset(midPoint);
+    // 前序遍历 midPoint 指向的那棵树
+    auto result = std::vector<decltype(midPoint)> {};
+    handlePtr->traversePreOrder(
+            [&result, &lb, &ub](const auto& nodePtr) mutable -> void {
+                    const auto& key = *nodePtr->keyPtr;
+                    if (key < lb || key > ub) {
+                        // No op.
+                    } else {
+                        result.emplace_back(nodePtr);
+                    }
+                },
             [](const auto& nodePtr) -> bool { return true; }
     );
+    handlePtr->reset(temp);
+
+    std::for_each(std::begin(result), std::end(result), [](const auto& nodePtr) -> void {
+        const auto& key = *nodePtr->keyPtr;
+        const auto& value = *nodePtr->valuePtr;
+        std::cout << "key: " << key << ", value: " << value << "\n";
+    });
 
     std::for_each(std::begin(testData), std::end(testData), [&handlePtr](auto pair) {
         auto keyPtr = std::make_shared<std::string>(pair.first);
