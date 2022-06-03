@@ -251,6 +251,9 @@ namespace BST {
         static void deleteMinWithNodeKey(NodePtr& nodePtr, const NodePtr& nodeKey);
 
         static void deleteMaxWithNodeKey(NodePtr& nodePtr, const NodePtr& nodeKey);
+
+        /** 删除给定的子节点 */
+        static void deleteChild(NodePtr& root, std::function<NodePtr& (NodePtr& root)> getChildPtrStorageMutableRef);
     };
 
     template<Comparable KeyType, typename ValueType>
@@ -601,9 +604,31 @@ namespace BST {
 
     template<Comparable KeyType, typename ValueType>
     void BSTHandle<KeyType, ValueType>::deleteLeftChild(NodePtr &root) {
+        BSTHandle<KeyType, ValueType>::deleteChild(
+                root,
+                [](NodePtr &_nodePtr) mutable -> NodePtr& {
+                    return _nodePtr->leftPtr;
+                }
+        );
+    }
+
+    template<Comparable KeyType, typename ValueType>
+    void BSTHandle<KeyType, ValueType>::deleteRightChild(NodePtr &root) {
+        BSTHandle<KeyType, ValueType>::deleteChild(
+                root,
+                [](NodePtr &_nodePtr) mutable -> NodePtr& {
+                    return _nodePtr->rightPtr;
+                }
+        );
+    }
+
+    template<Comparable KeyType, typename ValueType>
+    void
+    BSTHandle<KeyType, ValueType>::deleteChild(NodePtr &root, std::function<NodePtr &(NodePtr &)> getChildPtrStorageMutableRef) {
         if (root) {
-            if (root->leftPtr) {
-                if (root->leftPtr->leftPtr && root->leftPtr->rightPtr) {
+            auto& childRef = getChildPtrStorageMutableRef(root);
+            if (childRef) {
+                if (childRef->leftPtr && childRef->rightPtr) {
                     // 被删除的那个节点它既有左子节点又有右子节点
                     // 现在的问题是 this->leftPtr 要怎么更新？
                     // 设当前节点叫做 root, 被删除的那个节点（也就是 root 的左子节点）叫做 A, A 有左子节点 L, A 也有右子节点 R, 也就是如下图所示：
@@ -616,32 +641,27 @@ namespace BST {
                     //   L   R
                     // 思路是这样：被用来顶替 A 的位置的是 min(R), 这个 min(R) 其实就是 R 所代表的子树中的最小的节点，因为 R 是非空的，因此这个 min(R) 一定存在。
 
-                    auto nodeA = root->leftPtr;
+                    auto nodeA = childRef;
                     auto nodeR = nodeA->rightPtr;
                     auto nodeL = nodeA->leftPtr;
                     auto minR = BSTHandle<KeyType, ValueType>::min(nodeR);
-                    minR->leftPtr = nodeL; // 这一步一定要先于 root->leftPtr = minR, 因为在那之后 nodeA 的引用计数变为 0, nodeA 会被 GC, 从而 nodeL = nodeA->leftPtr 也会被 GC
-                    root->leftPtr = minR;
+                    minR->leftPtr = nodeL; // 这一步一定要先于 childRef = minR, 因为在那之后 nodeA 的引用计数变为 0, nodeA 会被 GC, 从而 nodeL = nodeA->leftPtr 也会被 GC
+                    childRef = minR;
                     if (minR != nodeR) {
                         BSTHandle<KeyType, ValueType>::deleteMin(nodeR);
                     }
-                } else if (root->leftPtr->leftPtr) {
+                } else if (childRef->leftPtr) {
                     // 被删除的那个节点它只有左子节
-                    root->leftPtr = root->leftPtr->leftPtr;
-                } else if (root->leftPtr->rightPtr) {
+                    childRef = childRef->leftPtr;
+                } else if (childRef->rightPtr) {
                     // 被删除的那个节点它只有右节点
-                    root->leftPtr = root->leftPtr->rightPtr;
+                    childRef = childRef->rightPtr;
                 } else {
                     // 被删除的那个节点它没有任何子节点
-                    root->leftPtr = makeNil<KeyType, ValueType>();
+                    childRef = makeNil<KeyType, ValueType>();
                 }
             }
         }
-    }
-
-    template<Comparable KeyType, typename ValueType>
-    void BSTHandle<KeyType, ValueType>::deleteRightChild(NodePtr &root) {
-
     }
 }
 
