@@ -4,7 +4,7 @@
 
 ### 定义
 
-设类型 `KeyType` 满足良序要求，则我们可以定义定义了关于类型 `KeyType` 的下列操作的数据结构为类型 `KeyType` 的优先队列：
+设类型 `KeyType` 满足全序要求，则我们可以定义定义了关于类型 `KeyType` 的下列操作的数据结构为类型 `KeyType` 的优先队列：
 
 - `KeyType top(this) const` 获得队列最前的元素；
 - `void pop(this)` 移除队列最前的元素；
