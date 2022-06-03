@@ -119,22 +119,6 @@ namespace BST {
         );
     }
 
-    template<Comparable KeyType, typename ValueType>
-    NodePtr<KeyType, ValueType> rangeSearchOne(const NodePtr<KeyType, ValueType>& root, const KeyType& lowerBound, const KeyType& upperBound) {
-        if (root) {
-            const KeyType& key = *root->keyPtr;
-            if (key < lowerBound) {
-                return rangeSearchOne(root->rightPtr, lowerBound, upperBound);
-            } else if (key > upperBound) {
-                return rangeSearchOne(root->leftPtr, lowerBound, upperBound);
-            } else {
-                return root;
-            }
-        }
-
-        return root;
-    }
-
     /** 二叉搜索树句柄类，一个 ::BST::BSTHandle 实例可以用来操纵一个 ::BST::BSTNode 实例 */
     template<Comparable KeyType, typename ValueType>
     class BSTHandle {
@@ -191,6 +175,9 @@ namespace BST {
                 const KeyType& lowerBound,
                 const KeyType& upperBound
         );
+
+        static NodePtr
+        rangeSearchOne(const NodePtr& root, const KeyType& lowerBound, const KeyType& upperBound);
 
         std::unique_ptr<std::vector<BST::NodePtr<KeyType, ValueType>>> rangeSearchMany(
                 const KeyType& lowerBound,
@@ -513,7 +500,7 @@ namespace BST {
     std::unique_ptr<std::vector<BST::NodePtr<KeyType, ValueType>>>
     BSTHandle<KeyType, ValueType>::rangeSearchMany(const NodePtr &root, const KeyType &lowerBound,
                                                    const KeyType &upperBound) {
-        auto midPoint = rangeSearchOne(root, lowerBound, upperBound);
+        auto midPoint = BSTHandle<KeyType, ValueType>::rangeSearchOne(root, lowerBound, upperBound);
         auto resultVectorPtr = std::make_unique<std::vector<BST::NodePtr<KeyType, ValueType>>>();
         auto& result = *resultVectorPtr;
         BSTHandle<KeyType, ValueType>::traversePreOrder(
@@ -554,6 +541,26 @@ namespace BST {
     std::unique_ptr<std::vector<BST::NodePtr<KeyType, ValueType>>>
     BSTHandle<KeyType, ValueType>::rangeSearchMany(const KeyType &lowerBound, const KeyType &upperBound) {
         return BSTHandle<KeyType, ValueType>::rangeSearchMany(this->nodePtr, lowerBound, upperBound);
+    }
+
+    template<Comparable KeyType, typename ValueType>
+    BST::NodePtr<KeyType, ValueType> BSTHandle<KeyType, ValueType>::rangeSearchOne(
+            const NodePtr &root,
+            const KeyType &lowerBound,
+            const KeyType &upperBound
+    ) {
+        if (root) {
+            const KeyType& key = *root->keyPtr;
+            if (key < lowerBound) {
+                return rangeSearchOne(root->rightPtr, lowerBound, upperBound);
+            } else if (key > upperBound) {
+                return rangeSearchOne(root->leftPtr, lowerBound, upperBound);
+            } else {
+                return root;
+            }
+        }
+
+        return root;
     }
 }
 
