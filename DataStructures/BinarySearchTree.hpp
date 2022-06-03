@@ -53,12 +53,6 @@ namespace BST {
         return std::make_shared<BSTNode<KeyType, ValueType>>();
     }
 
-    /** 返回一个空指针 */
-    template <Comparable KeyType, typename ValueType>
-    decltype(auto) makeNil() {
-        return std::shared_ptr<BSTNode<KeyType, ValueType>> {};
-    }
-
     template<Comparable KeyType, typename ValueType>
     NodePtr<KeyType, ValueType> updateBoundary(
             NodePtr<KeyType, ValueType> current,
@@ -312,9 +306,8 @@ namespace BST {
 
     template<Comparable KeyType, typename ValueType>
     ValuePtr<ValueType> BSTHandle<KeyType, ValueType>::search(const NodePtr &nodePtr, const KeyPtr &keyPtr) {
-        auto nil = BST::ValuePtr<ValueType> {};
         if (!nodePtr) {
-            return nil;
+            return nullptr;
         }
 
         const KeyType& lhs = *keyPtr;
@@ -362,7 +355,7 @@ namespace BST {
                     head = head->leftPtr;
                 }
 
-                prev->leftPtr = makeNil<KeyType, ValueType>();
+                prev->leftPtr = nullptr;
             } else {
                 if (_nodePtr->rightPtr) {
                     Handle::assignNodePtr(_nodePtr, _nodePtr->rightPtr);
@@ -408,7 +401,7 @@ namespace BST {
                     head = head->rightPtr;
                 }
 
-                prev->rightPtr = makeNil<KeyType, ValueType>();
+                prev->rightPtr = nullptr;
             } else {
                 if (_nodePtr->leftPtr) {
                     Handle::assignNodePtr(_nodePtr, _nodePtr->leftPtr);
@@ -437,7 +430,7 @@ namespace BST {
 
     template<Comparable KeyType, typename ValueType>
     NodePtr<KeyType, ValueType> BSTHandle<KeyType, ValueType>::floor(const NodePtr &nodePtr, const KeyPtr &keyPtr) {
-        return updateFloorCandidate(nodePtr, makeNil<KeyType, ValueType>(), keyPtr);
+        return updateFloorCandidate(nodePtr, NodePtr {}, keyPtr);
     }
 
     template<Comparable KeyType, typename ValueType>
@@ -448,7 +441,7 @@ namespace BST {
     template<Comparable KeyType, typename ValueType>
     NodePtr<KeyType, ValueType>
     BSTHandle<KeyType, ValueType>::ceil(const NodePtr &currentNodePtr, const KeyPtr &keyPtr) {
-        return updateCeilCandidate(currentNodePtr, makeNil<KeyType, ValueType>(), keyPtr);
+        return updateCeilCandidate(currentNodePtr, NodePtr {}, keyPtr);
     }
 
     template<Comparable KeyType, typename ValueType>
@@ -603,7 +596,7 @@ namespace BST {
             if (root->leftPtr) {
                 BSTHandle<KeyType, ValueType>::deleteNodeInPlace(root->leftPtr);
                 if (!(root->leftPtr->leftPtr || root->leftPtr->rightPtr)) {
-                    root->leftPtr = makeNil<KeyType, ValueType>();
+                    root->leftPtr = nullptr;
                 }
             }
         }
@@ -615,7 +608,7 @@ namespace BST {
             if (root->rightPtr) {
                 BSTHandle<KeyType, ValueType>::deleteNodeInPlace(root->rightPtr);
                 if (!(root->rightPtr->leftPtr || root->rightPtr->rightPtr)) {
-                    root->rightPtr = makeNil<KeyType, ValueType>();
+                    root->rightPtr = nullptr;
                 }
             }
         }
