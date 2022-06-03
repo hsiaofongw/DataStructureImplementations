@@ -292,16 +292,12 @@ namespace BST {
                         if (Handle::empty(head->rightPtr)) {
                             head->rightPtr = emptyNode;
                             head->rightPtr->keyPtr = keyPtr;
-                            head->rightPtr->valuePtr = valuePtr;
-                            return;
                         }
                         head = head->rightPtr;
                     } else if (*keyPtr < *head->keyPtr) {
                         if (Handle::empty(head->leftPtr)) {
                             head->leftPtr = emptyNode;
                             head->leftPtr->keyPtr = keyPtr;
-                            head->leftPtr->valuePtr = valuePtr;
-                            return;
                         }
                         head = head->leftPtr;
                     } else {}
