@@ -50,7 +50,7 @@ int main() {
     });
 
     std::cout << "PreOrder: \n";
-    handlePtr->traversePreOrder(
+    handlePtr->traverseInOrderLNR(
             [](const auto& root) {
                     std::cout << "key: " << (*root->keyPtr) << ", value: " << (*root->valuePtr) << "\n";
             },
@@ -59,12 +59,12 @@ int main() {
     );
 
     std::cout << "PostOrder: \n";
-    handlePtr->traversePostOrder(
-            [](const auto& root) {
+    handlePtr->traverseInOrderRNL(
+            [](const auto &root) {
                 std::cout << "key: " << (*root->keyPtr) << ", value: " << (*root->valuePtr) << "\n";
             },
-            [](const auto& _1, const auto& _2) -> bool { return false;  },
-            [](const auto& nodePtr) -> bool { return true;  }
+            [](const auto &_1, const auto &_2) -> bool { return false; },
+            [](const auto &nodePtr) -> bool { return true; }
     );
 
     std::cout << "Between E and R, inclusively: \n";

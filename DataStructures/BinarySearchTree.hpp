@@ -128,36 +128,43 @@ namespace BST {
     using ValuePtr = BST::ValuePtr<ValueType>;
 
     public:
+        /** 默认构造一个 BSTHandle 实例，该实例控制一个 size = 0 的树 */
         BSTHandle( );
 
+        /** 构造一个 BSTHandle 实例，该实例控制一个指定的树（要求传入一个 NodePtr）*/
         explicit BSTHandle(NodePtr nodePtr);
 
+        /** 计算一棵树有多少个非空节点 */
         static size_t size(const NodePtr& nodePtr);
 
+        /** 插入一个键值对记录到一个指定的树中 */
         static void insert(NodePtr& nodePtr, const KeyPtr &keyPtr, const ValuePtr &valuePtr);
 
+        /** 搜索一个树，看有没有特定的键对应的值，如果没有返回一个空指针，如果有返回一个指针指向那个值 */
         static BST::ValuePtr<ValueType> search(const NodePtr& nodePtr, const KeyPtr &keyPtr);
 
+        /** 返回最小的键对应的树的节点 */
         static BST::NodePtr<KeyType, ValueType> min(const NodePtr& nodePtr);
 
+        /** 返回最大的键对应的树的节点 */
         static BST::NodePtr<KeyType, ValueType> max(const NodePtr& nodePtr);
 
+        /** 删除最小的键对应的树的节点 */
         static void deleteMin(NodePtr& nodePtr);
 
-        static void deleteMinWithNodeKey(NodePtr& nodePtr, const NodePtr& nodeKey);
-
+        /** 删除最大的键对应的树的节点 */
         static void deleteMax(NodePtr& nodePtr);
 
-        static void deleteMaxWithNodeKey(NodePtr& nodePtr, const NodePtr& nodeKey);
-
-        static void traversePreOrder(
+        /** In-Order, Recursive Left, Current, Then Recursive Right */
+        static void traverseInOrderLNR(
                 const NodePtr &root,
                 std::function<void(const NodePtr &)> fn,
                 std::function<bool(const NodePtr& currentNodePtr, const NodePtr& enteringNodePtr)> prunePredicate,
                 std::function<bool(const NodePtr &)> probePredicate
         );
 
-        static void traversePostOrder(
+        /** In-Order, Recursive Right, Current, Then Recursive Left */
+        static void traverseInOrderRNL(
                 const NodePtr &root,
                 std::function<void(const NodePtr &)> fn,
                 std::function<bool(const NodePtr& currentNodePtr, const NodePtr& enteringNodePtr)> prunePredicate,
@@ -212,19 +219,26 @@ namespace BST {
 
         BST::NodePtr<KeyType, ValueType> ceil(const KeyPtr &keyPtr) const;
 
-        void traversePreOrder(
+        /** In-Order, Recursive Left, Current, Then Recursive Right */
+        void traverseInOrderLNR(
                 std::function<void(const NodePtr &)> fn,
                 std::function<bool(const NodePtr& currentNodePtr, const NodePtr& enteringNodePtr)> prunePredicate,
                 std::function<bool(const NodePtr &)> probePredicate
         );
 
-        void traversePostOrder(
+        /** In-Order, Recursive Right, Current, Then Recursive Left */
+        void traverseInOrderRNL(
                 std::function<void(const NodePtr &)> fn,
                 std::function<bool(const NodePtr& currentNodePtr, const NodePtr& enteringNodePtr)> prunePredicate,
                 std::function<bool(const NodePtr &)> probePredicate
         );
+
     private:
         NodePtr nodePtr;
+
+        static void deleteMinWithNodeKey(NodePtr& nodePtr, const NodePtr& nodeKey);
+
+        static void deleteMaxWithNodeKey(NodePtr& nodePtr, const NodePtr& nodeKey);
     };
 
     template<Comparable KeyType, typename ValueType>
@@ -423,7 +437,7 @@ namespace BST {
     }
 
     template<Comparable KeyType, typename ValueType>
-    void BSTHandle<KeyType, ValueType>::traversePreOrder(
+    void BSTHandle<KeyType, ValueType>::traverseInOrderLNR(
             const NodePtr &root,
             std::function<void(const NodePtr &)> fn,
             std::function<bool(const NodePtr& currentNodePtr, const NodePtr& enteringNodePtr)> prunePredicate,
@@ -431,18 +445,18 @@ namespace BST {
     ) {
         if (root && probePredicate(root)) {
             if (root->leftPtr && !prunePredicate(root, root->leftPtr)) {
-                BSTHandle<KeyType, ValueType>::traversePreOrder(
-                    root->leftPtr,
-                    fn,
-                    prunePredicate,
-                    probePredicate
+                BSTHandle<KeyType, ValueType>::traverseInOrderLNR(
+                        root->leftPtr,
+                        fn,
+                        prunePredicate,
+                        probePredicate
                 );
             }
 
             fn(root);
 
             if (root->rightPtr && !prunePredicate(root, root->rightPtr)) {
-                BSTHandle<KeyType, ValueType>::traversePreOrder(
+                BSTHandle<KeyType, ValueType>::traverseInOrderLNR(
                         root->rightPtr,
                         fn,
                         prunePredicate,
@@ -453,7 +467,7 @@ namespace BST {
     }
 
     template<Comparable KeyType, typename ValueType>
-    void BSTHandle<KeyType, ValueType>::traversePostOrder(
+    void BSTHandle<KeyType, ValueType>::traverseInOrderRNL(
             const NodePtr &root,
             std::function<void(const NodePtr &)> fn,
             std::function<bool(const NodePtr& currentNodePtr, const NodePtr& enteringNodePtr)> prunePredicate,
@@ -461,7 +475,7 @@ namespace BST {
     ) {
         if (root && probePredicate(root)) {
             if (root->rightPtr && !prunePredicate(root, root->rightPtr)) {
-                BSTHandle<KeyType, ValueType>::traversePostOrder(
+                BSTHandle<KeyType, ValueType>::traverseInOrderRNL(
                         root->rightPtr,
                         fn,
                         prunePredicate,
@@ -472,7 +486,7 @@ namespace BST {
             fn(root);
 
             if (root->leftPtr && !prunePredicate(root, root->leftPtr)) {
-                BSTHandle<KeyType, ValueType>::traversePostOrder(
+                BSTHandle<KeyType, ValueType>::traverseInOrderRNL(
                         root->leftPtr,
                         fn,
                         prunePredicate,
@@ -483,17 +497,17 @@ namespace BST {
     }
 
     template<Comparable KeyType, typename ValueType>
-    void BSTHandle<KeyType, ValueType>::traversePreOrder(std::function<void(const NodePtr &)> fn,
-                                                         std::function<bool(const NodePtr& currentNodePtr, const NodePtr& enteringNodePtr)> prunePredicate,
-                                                         std::function<bool(const NodePtr &)> probePredicate) {
-        BSTHandle<KeyType, ValueType>::traversePreOrder(this->nodePtr, fn, prunePredicate, probePredicate);
+    void BSTHandle<KeyType, ValueType>::traverseInOrderLNR(std::function<void(const NodePtr &)> fn,
+                                                           std::function<bool(const NodePtr& currentNodePtr, const NodePtr& enteringNodePtr)> prunePredicate,
+                                                           std::function<bool(const NodePtr &)> probePredicate) {
+        BSTHandle<KeyType, ValueType>::traverseInOrderLNR(this->nodePtr, fn, prunePredicate, probePredicate);
     }
 
     template<Comparable KeyType, typename ValueType>
-    void BSTHandle<KeyType, ValueType>::traversePostOrder(std::function<void(const NodePtr &)> fn,
-                                                          std::function<bool(const NodePtr& currentNodePtr, const NodePtr& enteringNodePtr)> prunePredicate,
-                                                          std::function<bool(const NodePtr &)> probePredicate) {
-        BSTHandle<KeyType, ValueType>::traversePostOrder(this->nodePtr, fn, prunePredicate, probePredicate);
+    void BSTHandle<KeyType, ValueType>::traverseInOrderRNL(std::function<void(const NodePtr &)> fn,
+                                                           std::function<bool(const NodePtr& currentNodePtr, const NodePtr& enteringNodePtr)> prunePredicate,
+                                                           std::function<bool(const NodePtr &)> probePredicate) {
+        BSTHandle<KeyType, ValueType>::traverseInOrderRNL(this->nodePtr, fn, prunePredicate, probePredicate);
     }
 
     template<Comparable KeyType, typename ValueType>
@@ -503,7 +517,7 @@ namespace BST {
         auto midPoint = BSTHandle<KeyType, ValueType>::rangeSearchOne(root, lowerBound, upperBound);
         auto resultVectorPtr = std::make_unique<std::vector<BST::NodePtr<KeyType, ValueType>>>();
         auto& result = *resultVectorPtr;
-        BSTHandle<KeyType, ValueType>::traversePreOrder(
+        BSTHandle<KeyType, ValueType>::traverseInOrderLNR(
                 // 遍历起始点
                 midPoint,
 
@@ -518,8 +532,8 @@ namespace BST {
                 },
 
                 // 剪枝判别准则
-                [&lowerBound, &upperBound](const auto& currentNodePtr, const auto& enteringNodePtr) -> bool {
-                    const auto& key = *currentNodePtr->keyPtr;
+                [&lowerBound, &upperBound](const auto &currentNodePtr, const auto &enteringNodePtr) -> bool {
+                    const auto &key = *currentNodePtr->keyPtr;
                     if (key < lowerBound && enteringNodePtr == currentNodePtr->leftPtr) {
                         return true; // 若当前节点的 key 已经小于 lb, 那么放弃对当前节点的左子节点及其所有后代节点的探索。
                     }
@@ -532,7 +546,7 @@ namespace BST {
                 },
 
                 // 节点可进入性判定准则
-                [](const auto& _) -> bool { return true; }
+                [](const auto &_) -> bool { return true; }
         );
         return resultVectorPtr;
     }
