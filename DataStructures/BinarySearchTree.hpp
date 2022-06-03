@@ -276,20 +276,40 @@ namespace BST {
 
     template<Comparable KeyType, typename ValueType>
     void BSTHandle<KeyType, ValueType>::insert(NodePtr &nodePtr, const KeyPtr &keyPtr, const ValuePtr &valuePtr) {
-        if (!nodePtr) {
-            nodePtr = makeEmptyNode<KeyType, ValueType>();
-            nodePtr->keyPtr = keyPtr;
-            nodePtr->valuePtr = valuePtr;
-            return;
-        }
-
-        const KeyType& lhs = *keyPtr;
-        const KeyType& rhs = *nodePtr->keyPtr;
-        if (lhs > rhs) {
-            BSTHandle<KeyType, ValueType>::insert(nodePtr->rightPtr, keyPtr, valuePtr);
-        } else if (lhs < rhs) {
-            BSTHandle<KeyType, ValueType>::insert(nodePtr->leftPtr, keyPtr, valuePtr);
+        NodePtr emptyNode = makeEmptyNode<KeyType, ValueType>();
+        if (nodePtr) {
+            // nodePtr 不能是空指针
+            if (Handle::empty(nodePtr)) {
+                nodePtr->keyPtr = keyPtr;
+                nodePtr->valuePtr = valuePtr;
+            } else {
+                NodePtr head { nodePtr };
+                while (!Handle::empty(head)) {
+                    if (*head->keyPtr == *keyPtr) {
+                        head->valuePtr = valuePtr;
+                        return;
+                    } else if (*keyPtr > *head->keyPtr) {
+                        if (Handle::empty(head->rightPtr)) {
+                            head->rightPtr = emptyNode;
+                            head->rightPtr->keyPtr = keyPtr;
+                            head->rightPtr->valuePtr = valuePtr;
+                            return;
+                        }
+                        head = head->rightPtr;
+                    } else if (*keyPtr < *head->keyPtr) {
+                        if (Handle::empty(head->leftPtr)) {
+                            head->leftPtr = emptyNode;
+                            head->leftPtr->keyPtr = keyPtr;
+                            head->leftPtr->valuePtr = valuePtr;
+                            return;
+                        }
+                        head = head->leftPtr;
+                    } else {}
+                }
+            }
         } else {
+            // nodePtr 是一个空指针，常见于默认构造的 Handle 的 NodePtr 类型私有成员
+            nodePtr = makeEmptyNode<KeyType, ValueType>();
             nodePtr->keyPtr = keyPtr;
             nodePtr->valuePtr = valuePtr;
         }
@@ -306,9 +326,9 @@ namespace BST {
         while (!Handle::empty(head)) {
             if (*head->keyPtr == key) {
                 return head->valuePtr;
-            } else if (*head->keyPtr < key) {
+            } else if (key < *head->keyPtr ) {
                 head = head->leftPtr;
-            } else if (*head->keyPtr > key) {
+            } else if (key > *head->keyPtr) {
                 head = head->rightPtr;
             } else {}
         }
