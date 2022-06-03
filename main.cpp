@@ -53,7 +53,8 @@ int main() {
     handlePtr->traversePreOrder(
             [](const auto& root) {
                     std::cout << "key: " << (*root->keyPtr) << ", value: " << (*root->valuePtr) << "\n";
-                },
+            },
+            [](const auto& _1, const auto& _2) -> bool { return false;  },
             [](const auto& nodePtr) -> bool { return true;  }
     );
 
@@ -62,6 +63,7 @@ int main() {
             [](const auto& root) {
                 std::cout << "key: " << (*root->keyPtr) << ", value: " << (*root->valuePtr) << "\n";
             },
+            [](const auto& _1, const auto& _2) -> bool { return false;  },
             [](const auto& nodePtr) -> bool { return true;  }
     );
 
@@ -73,26 +75,8 @@ int main() {
     // 定义上确界为 "R", 闭区间的右端点是 "R"
     auto ub = std::string { "R" };
 
-    // lb 和 ub 一起，定义了一个闭区间 ["E", "R"]
-
-    // 我们要在树中找到一个节点 Px, 满足 Px in [E, R]
-    auto midPoint = BST::rangeSearchOne(handlePtr->get(), lb, ub);
-    auto temp = handlePtr->get();
-    handlePtr->reset(midPoint);
-    // 前序遍历 midPoint 指向的那棵树
-    auto result = std::vector<decltype(midPoint)> {};
-    handlePtr->traversePreOrder(
-            [&result, &lb, &ub](const auto& nodePtr) mutable -> void {
-                    const auto& key = *nodePtr->keyPtr;
-                    if (key < lb || key > ub) {
-                        // No op.
-                    } else {
-                        result.emplace_back(nodePtr);
-                    }
-                },
-            [](const auto& nodePtr) -> bool { return true; }
-    );
-    handlePtr->reset(temp);
+    auto resultPtr = handlePtr->rangeSearchMany(lb, ub);
+    const auto& result = *resultPtr;
 
     std::for_each(std::begin(result), std::end(result), [](const auto& nodePtr) -> void {
         const auto& key = *nodePtr->keyPtr;
