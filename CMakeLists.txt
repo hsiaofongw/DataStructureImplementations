@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(PriorityQueueImplementations)
+project(DataStructureImplementations)
 
 set(CMAKE_CXX_STANDARD 23)
 
