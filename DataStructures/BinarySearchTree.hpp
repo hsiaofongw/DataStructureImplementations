@@ -186,6 +186,12 @@ namespace BST {
         static NodePtr
         rangeSearchOne(const NodePtr& root, const KeyType& lowerBound, const KeyType& upperBound);
 
+        /** 删除这个句柄控制的树的左子节点 */
+        static void deleteLeftChild(NodePtr& root);
+
+        /** 删除这个句柄控制的树的右子节点 */
+        static void deleteRightChild(NodePtr& root);
+
         std::unique_ptr<std::vector<BST::NodePtr<KeyType, ValueType>>> rangeSearchMany(
                 const KeyType& lowerBound,
                 const KeyType& upperBound
@@ -208,6 +214,12 @@ namespace BST {
 
         /** 删除这个句柄控制的树的 key 最大的节点 */
         void deleteMax();
+
+        /** 删除这个句柄控制的树的左子节点 */
+        void deleteLeftChild();
+
+        /** 删除这个句柄控制的树的右子节点 */
+        void deleteRightChild();
 
         /** 判断这个句柄是否控制的是一颗没有任何元素的树 */
         [[nodiscard]] bool empty() const;
@@ -575,6 +587,61 @@ namespace BST {
         }
 
         return root;
+    }
+
+    template<Comparable KeyType, typename ValueType>
+    void BSTHandle<KeyType, ValueType>::deleteLeftChild() {
+        BSTHandle<KeyType, ValueType>::deleteLeftChild(this->nodePtr);
+    }
+
+    template<Comparable KeyType, typename ValueType>
+    void BSTHandle<KeyType, ValueType>::deleteRightChild() {
+        BSTHandle<KeyType, ValueType>::deleteRightChild(this->nodePtr);
+    }
+
+    template<Comparable KeyType, typename ValueType>
+    void BSTHandle<KeyType, ValueType>::deleteLeftChild(NodePtr &root) {
+        if (root) {
+            if (root->leftPtr) {
+                if (root->leftPtr->leftPtr && root->leftPtr->rightPtr) {
+                    // 被删除的那个节点它既有左子节点又有右子节点
+                    // 现在的问题是 this->leftPtr 要怎么更新？
+                    // 设当前节点叫做 root, 被删除的那个节点（也就是 root 的左子节点）叫做 A, A 有左子节点 L, A 也有右子节点 R, 也就是如下图所示：
+                    //     root
+                    //     /
+                    //    /
+                    //   A
+                    //   | \
+                    //   |  \
+                    //   L   R
+                    // 思路是这样：被用来顶替 A 的位置的是 min(R), 这个 min(R) 其实就是 R 所代表的子树中的最小的节点，因为 R 是非空的，因此这个 min(R) 一定存在。
+
+                    auto nodeA = root->leftPtr;
+                    auto nodeR = nodeA->rightPtr;
+                    auto nodeL = nodeA->leftPtr;
+                    auto minR = BSTHandle<KeyType, ValueType>::min(nodeR);
+                    minR->leftPtr = nodeL; // 这一步一定要先于 root->leftPtr = minR, 因为在那之后 nodeA 的引用计数变为 0, nodeA 会被 GC, 从而 nodeL = nodeA->leftPtr 也会被 GC
+                    root->leftPtr = minR;
+                    if (minR != nodeR) {
+                        BSTHandle<KeyType, ValueType>::deleteMin(nodeR);
+                    }
+                } else if (root->leftPtr->leftPtr) {
+                    // 被删除的那个节点它只有左子节
+                    root->leftPtr = root->leftPtr->leftPtr;
+                } else if (root->leftPtr->rightPtr) {
+                    // 被删除的那个节点它只有右节点
+                    root->leftPtr = root->leftPtr->rightPtr;
+                } else {
+                    // 被删除的那个节点它没有任何子节点
+                    root->leftPtr = makeNil<KeyType, ValueType>();
+                }
+            }
+        }
+    }
+
+    template<Comparable KeyType, typename ValueType>
+    void BSTHandle<KeyType, ValueType>::deleteRightChild(NodePtr &root) {
+
     }
 }
 
