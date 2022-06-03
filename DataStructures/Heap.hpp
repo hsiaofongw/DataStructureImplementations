@@ -5,6 +5,7 @@
 #ifndef UNTITLED_HEAO_HEAP_HPP
 #define UNTITLED_HEAO_HEAP_HPP
 
+#include <iostream>
 #include <concepts>
 #include <memory>
 #include <string>

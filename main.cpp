@@ -1,7 +1,7 @@
 #include <iostream>
 #include <random>
-#include "heap.hpp"
-#include "BinarySearchTree.hpp"
+#include "DataStructures/Heap.hpp"
+#include "DataStructures/BinarySearchTree.hpp"
 #include <unordered_map>
 #include <map>
 
