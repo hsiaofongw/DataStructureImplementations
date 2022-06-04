@@ -368,6 +368,16 @@ namespace BST {
                     head = head->leftPtr;
                 }
 
+                if (prev->leftPtr) {
+                    if (prev->leftPtr->rightPtr) {
+                        prev->leftPtr->keyPtr = prev->leftPtr->rightPtr->keyPtr;
+                        prev->leftPtr->valuePtr = prev->leftPtr->rightPtr->valuePtr;
+                        prev->leftPtr->leftPtr = prev->leftPtr->rightPtr->leftPtr;
+                        prev->leftPtr->rightPtr = prev->leftPtr->rightPtr->rightPtr;
+                        return;
+                    }
+                }
+
                 prev->leftPtr = nullptr;
                 return;
             }
@@ -419,6 +429,16 @@ namespace BST {
                 while (head->rightPtr) {
                     prev = head;
                     head = head->rightPtr;
+                }
+
+                if (prev->rightPtr) {
+                    if (prev->rightPtr->leftPtr) {
+                        prev->rightPtr->keyPtr = prev->rightPtr->leftPtr->keyPtr;
+                        prev->rightPtr->valuePtr = prev->rightPtr->leftPtr->valuePtr;
+                        prev->rightPtr->rightPtr = prev->rightPtr->leftPtr->rightPtr;
+                        prev->rightPtr->leftPtr = prev->rightPtr->leftPtr->leftPtr;
+                        return;
+                    }
                 }
 
                 prev->rightPtr = nullptr;

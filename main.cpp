@@ -108,6 +108,19 @@ int main() {
     std::cout << "打印：\n";
     print(handlePtr);
 
+    std::cout << "单次 deleteMin 测试：\n";
+    for (size_t idx = 0; idx < sampleVector.size(); ++idx) {
+        auto sampleBit = static_cast<bool>(sampleVector[idx]);
+        auto key = keyVector[idx];
+        if (sampleBit) {
+            std::cout << "deleteMin()\n";
+            handlePtr->deleteMin();
+            std::cout << "==\n";
+            print(handlePtr);
+            std::cout << "==\n";
+        }
+    }
+
     return 0;
 
     std::cout << "删除测试：\n";
