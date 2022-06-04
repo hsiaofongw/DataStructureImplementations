@@ -359,29 +359,31 @@ namespace BST {
 
     template<Comparable KeyType, typename ValueType>
     void BSTHandle<KeyType, ValueType>::deleteMin(NodePtr &_nodePtr) {
-        NodePtr temp { _nodePtr };
-        if (_nodePtr) {
-            if (_nodePtr->leftPtr) {
-                NodePtr prev { _nodePtr };
-                while (_nodePtr->leftPtr) {
-                    prev = _nodePtr;
-                    _nodePtr = _nodePtr->leftPtr;
+        NodePtr head { _nodePtr };
+        if (head) {
+            if (head->leftPtr) {
+                NodePtr prev { head };
+                while (head->leftPtr) {
+                    prev = head;
+                    head = head->leftPtr;
                 }
 
                 prev->leftPtr = nullptr;
-                _nodePtr = temp;
                 return;
             }
 
-            _nodePtr->keyPtr = nullptr;
-            _nodePtr->valuePtr = nullptr;
+            head->keyPtr = nullptr;
+            head->valuePtr = nullptr;
 
-            if (_nodePtr->rightPtr) {
-                _nodePtr->keyPtr = _nodePtr->rightPtr->keyPtr;
-                _nodePtr->valuePtr = _nodePtr->rightPtr->valuePtr;
-                _nodePtr->leftPtr = _nodePtr->rightPtr->rightPtr;
-                _nodePtr->rightPtr = _nodePtr->rightPtr->leftPtr;
+            if (head->rightPtr) {
+                head->keyPtr = head->rightPtr->keyPtr;
+                head->valuePtr = head->rightPtr->valuePtr;
+                head->leftPtr = head->rightPtr->leftPtr;
+                head->rightPtr = head->rightPtr->rightPtr;
+                return;
             }
+
+            _nodePtr = nullptr;
         }
     }
 
@@ -410,29 +412,31 @@ namespace BST {
 
     template<Comparable KeyType, typename ValueType>
     void BSTHandle<KeyType, ValueType>::deleteMax(NodePtr &_nodePtr) {
-        NodePtr temp { _nodePtr };
-        if (_nodePtr) {
-            if (_nodePtr->rightPtr) {
-                NodePtr prev { _nodePtr };
-                while (_nodePtr->rightPtr) {
-                    prev = _nodePtr;
-                    _nodePtr = _nodePtr->rightPtr;
+        NodePtr head { _nodePtr };
+        if (head) {
+            if (head->rightPtr) {
+                NodePtr prev { head };
+                while (head->rightPtr) {
+                    prev = head;
+                    head = head->rightPtr;
                 }
 
                 prev->rightPtr = nullptr;
-                _nodePtr = temp;
                 return;
             }
 
-            _nodePtr->keyPtr = nullptr;
-            _nodePtr->valuePtr = nullptr;
+            head->keyPtr = nullptr;
+            head->valuePtr = nullptr;
 
-            if (_nodePtr->leftPtr) {
-                _nodePtr->keyPtr = _nodePtr->leftPtr->keyPtr;
-                _nodePtr->valuePtr = _nodePtr->leftPtr->valuePtr;
-                _nodePtr->rightPtr = _nodePtr->leftPtr->rightPtr;
-                _nodePtr->leftPtr = _nodePtr->leftPtr->leftPtr;
+            if (head->leftPtr) {
+                head->keyPtr = head->leftPtr->keyPtr;
+                head->valuePtr = head->leftPtr->valuePtr;
+                head->rightPtr = head->leftPtr->rightPtr;
+                head->leftPtr = head->leftPtr->leftPtr;
+                return;
             }
+
+            _nodePtr = nullptr;
         }
     }
 
@@ -643,25 +647,26 @@ namespace BST {
 
     template<Comparable KeyType, typename ValueType>
     void BSTHandle<KeyType, ValueType>::deleteKey(NodePtr &root, const KeyType &key) {
-        NodePtr rootBackup { root };
-        while (root) {
-            if (*root->keyPtr == key) {
-                Handle::deleteNodeInPlace(root);
+        if (root && *root->keyPtr == key) {
+            Handle::deleteNodeInPlace(root);
+            return;
+        }
+
+        NodePtr head { root };
+        while (head) {
+            if (*head->keyPtr == key) {
+                Handle::deleteNodeInPlace(head);
                 return;
             }
 
-            if (key > *root->keyPtr) {
-                root = root->rightPtr;
+            if (key > *head->keyPtr) {
+                head = head->rightPtr;
                 continue;
             }
 
-            if (key < *root->keyPtr) {
-                root = root->leftPtr;
+            if (key < *head->keyPtr) {
+                head = head->leftPtr;
             }
-        }
-
-        if (*rootBackup->keyPtr != key) {
-            root = rootBackup;
         }
     }
 

@@ -22,6 +22,19 @@ bool verifyTwoNumberListIdentical(const std::vector<uint64_t>& lst1, const std::
     return lst1Stat == lst2Stat;
 }
 
+std::unique_ptr<std::vector<bool>> makeSampleVector(size_t population) {
+    auto randomDevice = std::random_device {};
+    auto randomEngine = std::default_random_engine { randomDevice() };
+    auto distribution = std::bernoulli_distribution {};
+    auto sampleVectorPtr = std::make_unique<std::vector<bool>>();
+    for (size_t i = 0; i < population; ++i) {
+        auto sampleBit = static_cast<bool>(distribution(randomEngine));
+        sampleVectorPtr->push_back(sampleBit);
+    }
+
+    return sampleVectorPtr;
+}
+
 using Handle = BST::BSTHandle<std::string, uint64_t>;
 
 int main() {
@@ -65,15 +78,8 @@ int main() {
         keyVector.emplace_back(pair.first);
     }
 
-    auto randomDevice = std::random_device {};
-    auto randomEngine = std::default_random_engine { randomDevice() };
-    auto distribution = std::bernoulli_distribution {};
-
-    auto sampleVector = std::vector<bool> {};
-    for (const auto& _ : keyVector) {
-        auto sampleBit = distribution(randomEngine);
-        sampleVector.push_back(sampleBit);
-    }
+    auto sampleVectorPtr = makeSampleVector(keyVector.size());
+    const auto& sampleVector = *sampleVectorPtr;
 
     std::cout << "抽样表：\n";
     for (size_t idx = 0; idx < keyVector.size(); ++idx) {
@@ -101,6 +107,8 @@ int main() {
 
     std::cout << "打印：\n";
     print(handlePtr);
+
+    return 0;
 
     std::cout << "删除测试：\n";
     for (size_t idx = 0; idx < sampleVector.size(); ++idx) {
