@@ -40,14 +40,56 @@ int main() {
             { "E", 12 }
     };
 
-    auto handlePtr = std::make_shared<BST::BSTHandle<std::string, uint64_t>>();
-
+    using Handle = BST::BSTHandle<std::string, uint64_t>;
+    auto handlePtr = std::make_shared<Handle>();
+    std::cout << "数据：\n";
     std::for_each(std::begin(testData), std::end(testData), [&handlePtr](auto pair) {
-        std::cout << "insert: " << "key: " << pair.first << ", value: " << pair.second << "\n";
+        std::cout << "insert: " << "(" << pair.first << ", " << pair.second << ")\n";
         auto strPtr = std::make_shared<std::string>(pair.first);
         auto valPtr = std::make_shared<uint64_t>(pair.second);
         handlePtr->insert(strPtr, valPtr);
     });
+
+    auto keyVector = std::vector<std::string> {};
+    for (const auto& pair : testData) {
+        keyVector.emplace_back(pair.first);
+    }
+
+    auto randomDevice = std::random_device {};
+    auto randomEngine = std::default_random_engine { randomDevice() };
+    auto distribution = std::bernoulli_distribution {};
+
+    auto sampleVector = std::vector<bool> {};
+    for (const auto& _ : keyVector) {
+        auto sampleBit = distribution(randomEngine);
+        sampleVector.push_back(sampleBit);
+    }
+
+    std::cout << "抽样表：\n";
+    for (size_t idx = 0; idx < keyVector.size(); ++idx) {
+        std::cout << keyVector[idx] << ": ";
+        if (sampleVector[idx]) {
+            std::cout << "*";
+        } else {
+            std::cout << " ";
+        }
+        std::cout << "\n";
+    }
+
+    std::cout << "搜索测试：\n";
+    for (size_t idx = 0; idx < sampleVector.size(); ++idx) {
+        auto sampleBit = static_cast<bool>(sampleVector[idx]);
+        auto key = keyVector[idx];
+        if (sampleBit) {
+            std::cout << key << ": ";
+            if (auto resultPtr = handlePtr->search(key)) {
+                std::cout << "查询结果值 " << (*resultPtr) << " 实际值 " << testData[key];
+            }
+            std::cout << "\n";
+        }
+    }
+
+    return 0;
 
     std::cout << "PreOrder: \n";
     handlePtr->traverseInOrderLNR(
