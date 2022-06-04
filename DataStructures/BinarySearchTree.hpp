@@ -141,7 +141,7 @@ namespace BST {
         static size_t size(const NodePtr& nodePtr);
 
         /** 插入一个键值对记录到一个指定的树中 */
-        static void insert(NodePtr& nodePtr, const KeyPtr &keyPtr, const ValuePtr &valuePtr);
+        static void insert(NodePtr& root, const KeyPtr &keyPtr, const ValuePtr &valuePtr);
 
         /** 搜索一个树，看有没有特定的键对应的值，如果没有返回一个空指针，如果有返回一个指针指向那个值 */
         static BST::ValuePtr<ValueType> search(const NodePtr& nodePtr, const KeyType &keyPtr);
@@ -204,7 +204,7 @@ namespace BST {
 
         void insert(const KeyPtr& keyPtr, const ValuePtr& valuePtr);
 
-        BST::ValuePtr<ValueType> search(const KeyType &key);
+        BST::ValuePtr<ValueType> search(const KeyType &key) const;
 
         BST::NodePtr<KeyType, ValueType> min() const;
 
@@ -222,6 +222,8 @@ namespace BST {
         /** 让这个句柄控制另外一个 ::BST::BSTNode, 实现复用一个句柄实例的同时操纵多个 ::BST::BSTNode 的需求 */
         void reset(NodePtr nodePtr);
 
+        void deleteKey(const KeyType& key);
+
         BST::NodePtr<KeyType, ValueType> floor(const KeyPtr &keyPtr) const;
 
         BST::NodePtr<KeyType, ValueType> ceil(const KeyPtr &keyPtr) const;
@@ -233,6 +235,8 @@ namespace BST {
                 std::function<bool(const NodePtr &)> probePredicate
         );
 
+        void traverseInOrderLNR(std::function<void(const NodePtr &)> fn);
+
         /** In-Order, Recursive Right, Current, Then Recursive Left */
         void traverseInOrderRNL(
                 std::function<void(const NodePtr &)> fn,
@@ -243,10 +247,7 @@ namespace BST {
     private:
         NodePtr nodePtr;
 
-        static void deleteNodeInPlace(NodePtr& childRef);
-
-        /** 把 b 指向的节点的第一层数据全部复制到 a */
-        static void assignNodePtr(NodePtr& a, const NodePtr& b);
+        static void deleteNodeInPlace(NodePtr& root);
     };
 
     template<Comparable KeyType, typename ValueType>
@@ -275,39 +276,40 @@ namespace BST {
     }
 
     template<Comparable KeyType, typename ValueType>
-    void BSTHandle<KeyType, ValueType>::insert(NodePtr &nodePtr, const KeyPtr &keyPtr, const ValuePtr &valuePtr) {
+    void BSTHandle<KeyType, ValueType>::insert(NodePtr &root, const KeyPtr &keyPtr, const ValuePtr &valuePtr) {
         NodePtr emptyNode = makeEmptyNode<KeyType, ValueType>();
-        if (nodePtr) {
-            // nodePtr 不能是空指针
-            if (Handle::empty(nodePtr)) {
-                nodePtr->keyPtr = keyPtr;
-                nodePtr->valuePtr = valuePtr;
-            } else {
-                NodePtr head { nodePtr };
-                while (!Handle::empty(head)) {
-                    if (*head->keyPtr == *keyPtr) {
-                        head->valuePtr = valuePtr;
-                        return;
-                    } else if (*keyPtr > *head->keyPtr) {
-                        if (Handle::empty(head->rightPtr)) {
-                            head->rightPtr = emptyNode;
-                            head->rightPtr->keyPtr = keyPtr;
-                        }
-                        head = head->rightPtr;
-                    } else if (*keyPtr < *head->keyPtr) {
-                        if (Handle::empty(head->leftPtr)) {
-                            head->leftPtr = emptyNode;
-                            head->leftPtr->keyPtr = keyPtr;
-                        }
-                        head = head->leftPtr;
-                    } else {}
-                }
+        if (!root) {
+            root = emptyNode;
+            root->keyPtr = keyPtr;
+            root->valuePtr = valuePtr;
+            return;
+        }
+
+        NodePtr head { root };
+        while (head) {
+            if (*head->keyPtr == *keyPtr) {
+                head->valuePtr = valuePtr;
+                return;
             }
-        } else {
-            // nodePtr 是一个空指针，常见于默认构造的 Handle 的 NodePtr 类型私有成员
-            nodePtr = makeEmptyNode<KeyType, ValueType>();
-            nodePtr->keyPtr = keyPtr;
-            nodePtr->valuePtr = valuePtr;
+
+            if (*keyPtr > *head->keyPtr) {
+                if (!head->rightPtr) {
+                    head->rightPtr = emptyNode;
+                    head->rightPtr->keyPtr = keyPtr;
+                }
+
+                head = head->rightPtr;
+                continue;
+            }
+
+            if (*keyPtr < *head->keyPtr) {
+                if (!head->leftPtr) {
+                    head->leftPtr = emptyNode;
+                    head->leftPtr->keyPtr = keyPtr;
+                }
+
+                head = head->leftPtr;
+            }
         }
     }
 
@@ -319,7 +321,7 @@ namespace BST {
     template<Comparable KeyType, typename ValueType>
     ValuePtr<ValueType> BSTHandle<KeyType, ValueType>::search(const NodePtr &nodePtr, const KeyType& key) {
         NodePtr head { nodePtr };
-        while (!Handle::empty(head)) {
+        while (head) {
             if (*head->keyPtr == key) {
                 return head->valuePtr;
             } else if (key < *head->keyPtr ) {
@@ -333,7 +335,7 @@ namespace BST {
     }
 
     template<Comparable KeyType, typename ValueType>
-    ValuePtr<ValueType> BSTHandle<KeyType, ValueType>::search(const KeyType &key) {
+    ValuePtr<ValueType> BSTHandle<KeyType, ValueType>::search(const KeyType &key) const {
         return BSTHandle<KeyType, ValueType>::search(this->nodePtr, key);
     }
 
@@ -357,23 +359,28 @@ namespace BST {
 
     template<Comparable KeyType, typename ValueType>
     void BSTHandle<KeyType, ValueType>::deleteMin(NodePtr &_nodePtr) {
-        NodePtr head { _nodePtr };
-        if (head) {
-            if (head->leftPtr) {
-                NodePtr prev { head };
-                while (head->leftPtr) {
-                    prev = head;
-                    head = head->leftPtr;
+        NodePtr temp { _nodePtr };
+        if (_nodePtr) {
+            if (_nodePtr->leftPtr) {
+                NodePtr prev { _nodePtr };
+                while (_nodePtr->leftPtr) {
+                    prev = _nodePtr;
+                    _nodePtr = _nodePtr->leftPtr;
                 }
 
                 prev->leftPtr = nullptr;
-            } else {
-                if (_nodePtr->rightPtr) {
-                    Handle::assignNodePtr(_nodePtr, _nodePtr->rightPtr);
-                } else {
-                    _nodePtr->keyPtr = nullptr;
-                    _nodePtr->valuePtr = nullptr;
-                }
+                _nodePtr = temp;
+                return;
+            }
+
+            _nodePtr->keyPtr = nullptr;
+            _nodePtr->valuePtr = nullptr;
+
+            if (_nodePtr->rightPtr) {
+                _nodePtr->keyPtr = _nodePtr->rightPtr->keyPtr;
+                _nodePtr->valuePtr = _nodePtr->rightPtr->valuePtr;
+                _nodePtr->leftPtr = _nodePtr->rightPtr->rightPtr;
+                _nodePtr->rightPtr = _nodePtr->rightPtr->leftPtr;
             }
         }
     }
@@ -403,23 +410,28 @@ namespace BST {
 
     template<Comparable KeyType, typename ValueType>
     void BSTHandle<KeyType, ValueType>::deleteMax(NodePtr &_nodePtr) {
-        NodePtr head { _nodePtr };
-        if (head) {
-            if (head->rightPtr) {
-                NodePtr prev { head };
-                while (head->rightPtr) {
-                    prev = head;
-                    head = head->rightPtr;
+        NodePtr temp { _nodePtr };
+        if (_nodePtr) {
+            if (_nodePtr->rightPtr) {
+                NodePtr prev { _nodePtr };
+                while (_nodePtr->rightPtr) {
+                    prev = _nodePtr;
+                    _nodePtr = _nodePtr->rightPtr;
                 }
 
                 prev->rightPtr = nullptr;
-            } else {
-                if (_nodePtr->leftPtr) {
-                    Handle::assignNodePtr(_nodePtr, _nodePtr->leftPtr);
-                } else {
-                    _nodePtr->keyPtr = nullptr;
-                    _nodePtr->valuePtr = nullptr;
-                }
+                _nodePtr = temp;
+                return;
+            }
+
+            _nodePtr->keyPtr = nullptr;
+            _nodePtr->valuePtr = nullptr;
+
+            if (_nodePtr->leftPtr) {
+                _nodePtr->keyPtr = _nodePtr->leftPtr->keyPtr;
+                _nodePtr->valuePtr = _nodePtr->leftPtr->valuePtr;
+                _nodePtr->rightPtr = _nodePtr->leftPtr->rightPtr;
+                _nodePtr->leftPtr = _nodePtr->leftPtr->leftPtr;
             }
         }
     }
@@ -602,107 +614,70 @@ namespace BST {
     }
 
     template<Comparable KeyType, typename ValueType>
-    void BSTHandle<KeyType, ValueType>::deleteNodeInPlace(NodePtr &childRef) {
-        if (!Handle::empty(childRef)) {
-            childRef->keyPtr = nullptr;
-            childRef->valuePtr = nullptr;
-
-            if (childRef->leftPtr && childRef->rightPtr) {
-                // 被删除的那个节点它既有左子节点又有右子节点
-                // 现在的问题是 this->leftPtr 要怎么更新？
-                // 设当前节点叫做 root, 被删除的那个节点（也就是 root 的左子节点）叫做 A, A 有左子节点 L, A 也有右子节点 R, 也就是如下图所示：
-                //     root
-                //     /
-                //    /
-                //   A
-                //   | \
-                //   |  \
-                //   L   R
-                // 思路是这样：被用来顶替 A 的位置的是 min(R), 这个 min(R) 其实就是 R 所代表的子树中的最小的节点，因为 R 是非空的，因此这个 min(R) 一定存在。
-
-                NodePtr nodeA = childRef;
-                NodePtr nodeR = nodeA->rightPtr;
-                NodePtr minR = Handle::min(nodeR);
-                NodePtr nodeL = nodeA->leftPtr;
-                Handle::assignNodePtr(nodeA, minR);
-                nodeA->leftPtr = nodeL;
-                nodeA->rightPtr = nodeR;
-                if (minR == nodeR) {
-                    nodeA->rightPtr = nodeR->rightPtr;
+    void BSTHandle<KeyType, ValueType>::deleteNodeInPlace(NodePtr &root) {
+        if (root) {
+            if (root->leftPtr && root->rightPtr) {
+                NodePtr minR = Handle::min(root->rightPtr);
+                root->keyPtr = minR->keyPtr;
+                root->valuePtr = minR->valuePtr;
+                if (minR == root->rightPtr) {
+                    root->rightPtr = root->rightPtr->rightPtr;
                 } else {
-                    Handle::deleteMin(nodeR);
+                    Handle::deleteMin(root->rightPtr);
                 }
-            } else if (childRef->leftPtr) {
-                // 被删除的那个节点它只有左子节
-                Handle::assignNodePtr(childRef, childRef->leftPtr);
-            } else if (childRef->rightPtr) {
-                // 被删除的那个节点它只有右节点
-                Handle::assignNodePtr(childRef, childRef->rightPtr);
+            } else if (root->leftPtr) {
+                root->keyPtr = root->leftPtr->keyPtr;
+                root->valuePtr = root->leftPtr->valuePtr;
+                root->rightPtr = root->leftPtr->rightPtr;
+                root->leftPtr = root->leftPtr->leftPtr;
+            } else if (root->rightPtr) {
+                root->keyPtr = root->rightPtr->keyPtr;
+                root->valuePtr = root->rightPtr->valuePtr;
+                root->leftPtr = root->rightPtr->leftPtr;
+                root->rightPtr = root->rightPtr->rightPtr;
             } else {
-                // No op.
+                root = nullptr;
             }
         }
     }
 
     template<Comparable KeyType, typename ValueType>
     void BSTHandle<KeyType, ValueType>::deleteKey(NodePtr &root, const KeyType &key) {
-        const KeyType& rootKey = *root->keyPtr;
-        if (rootKey == key) {
-            Handle::deleteNodeInPlace(root);
-            return;
-        }
-
-        auto prune = [](NodePtr& pruneNode) {
-            if (Handle::empty(pruneNode->leftPtr) && Handle::empty(pruneNode->rightPtr)) {
-                pruneNode = nullptr;
+        NodePtr rootBackup { root };
+        while (root) {
+            if (*root->keyPtr == key) {
+                Handle::deleteNodeInPlace(root);
+                return;
             }
-        };
 
-        NodePtr head { root };
-        while (!Handle::empty(head)) {
-            const KeyType& headKey = *head->keyPtr;
-            if (key > headKey) {
-                if (!Handle::empty(head->rightPtr)) {
-                    if (*head->rightPtr->keyPtr == key) {
-                        Handle::deleteNodeInPlace(head->rightPtr);
-                        prune(head->rightPtr);
-                        return;
-                    }
+            if (key > *root->keyPtr) {
+                root = root->rightPtr;
+                continue;
+            }
 
-                    head = head->rightPtr;
-                }
-            } else {
-                // key < headKey
-                if (!Handle::empty(head->leftPtr)) {
-                    if (*head->leftPtr->keyPtr == key) {
-                        Handle::deleteNodeInPlace(head->leftPtr);
-                        prune(head->leftPtr);
-                        return;
-                    }
-
-                    head = head->leftPtr;
-                }
+            if (key < *root->keyPtr) {
+                root = root->leftPtr;
             }
         }
-    }
 
-    template<Comparable KeyType, typename ValueType>
-    void BSTHandle<KeyType, ValueType>::assignNodePtr(NodePtr &a, const NodePtr &b) {
-        a->keyPtr = b->keyPtr;
-        a->valuePtr = b->valuePtr;
-        a->leftPtr = b->leftPtr;
-        a->rightPtr = b->rightPtr;
+        if (*rootBackup->keyPtr != key) {
+            root = rootBackup;
+        }
     }
 
     template<Comparable KeyType, typename ValueType>
     bool BSTHandle<KeyType, ValueType>::empty(const NodePtr &root) {
-        if (root) {
-            if (root->keyPtr) {
-                return false;
-            }
-        }
+        return !root;
+    }
 
-        return true;
+    template<Comparable KeyType, typename ValueType>
+    void BSTHandle<KeyType, ValueType>::traverseInOrderLNR(std::function<void(const NodePtr &)> fn) {
+        Handle::traverseInOrderLNR(this->nodePtr, fn, [](const auto& _1, const auto& _2) -> bool { return false; }, [](const auto& _) -> bool { return true; });
+    }
+
+    template<Comparable KeyType, typename ValueType>
+    void BSTHandle<KeyType, ValueType>::deleteKey(const KeyType &key) {
+        Handle::deleteKey(this->nodePtr, key);
     }
 
 }

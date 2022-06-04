@@ -22,6 +22,8 @@ bool verifyTwoNumberListIdentical(const std::vector<uint64_t>& lst1, const std::
     return lst1Stat == lst2Stat;
 }
 
+using Handle = BST::BSTHandle<std::string, uint64_t>;
+
 int main() {
 
     auto testData = std::unordered_map<std::string, uint64_t> {
@@ -40,8 +42,13 @@ int main() {
             { "E", 12 }
     };
 
-    using Handle = BST::BSTHandle<std::string, uint64_t>;
     auto handlePtr = std::make_shared<Handle>();
+    auto print = [](const decltype(handlePtr)& handlePtr) {
+        handlePtr->traverseInOrderLNR([](const auto& nodePtr) -> void {
+            std::cout << "(" << (*nodePtr->keyPtr) << ", " << (*nodePtr->valuePtr) << ")\n";
+        });
+    };
+
     std::cout << "数据：\n";
     std::for_each(std::begin(testData), std::end(testData), [&handlePtr](auto pair) {
         std::cout << "insert: " << "(" << pair.first << ", " << pair.second << ")\n";
@@ -49,6 +56,9 @@ int main() {
         auto valPtr = std::make_shared<uint64_t>(pair.second);
         handlePtr->insert(strPtr, valPtr);
     });
+
+    std::cout << "打印：\n";
+    print(handlePtr);
 
     auto keyVector = std::vector<std::string> {};
     for (const auto& pair : testData) {
@@ -88,6 +98,22 @@ int main() {
             std::cout << "\n";
         }
     }
+
+    std::cout << "打印：\n";
+    print(handlePtr);
+
+    std::cout << "删除测试：\n";
+    for (size_t idx = 0; idx < sampleVector.size(); ++idx) {
+        auto sampleBit = static_cast<bool>(sampleVector[idx]);
+        auto key = keyVector[idx];
+        if (sampleBit) {
+            std::cout << "Delete: " << key << "\n";
+            handlePtr->deleteKey(key);
+        }
+    }
+
+    std::cout << "重新打印：\n";
+    print(handlePtr);
 
     return 0;
 
