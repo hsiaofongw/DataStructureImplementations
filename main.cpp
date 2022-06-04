@@ -56,19 +56,23 @@ int main() {
     };
 
     auto handlePtr = std::make_shared<Handle>();
-    auto print = [](const decltype(handlePtr)& handlePtr) {
+    auto print = [](const decltype(handlePtr)& handlePtr) -> void {
         handlePtr->traverseInOrderLNR([](const auto& nodePtr) -> void {
             std::cout << "(" << (*nodePtr->keyPtr) << ", " << (*nodePtr->valuePtr) << ")\n";
         });
     };
 
-    std::cout << "数据：\n";
-    std::for_each(std::begin(testData), std::end(testData), [&handlePtr](auto pair) {
-        std::cout << "insert: " << "(" << pair.first << ", " << pair.second << ")\n";
-        auto strPtr = std::make_shared<std::string>(pair.first);
-        auto valPtr = std::make_shared<uint64_t>(pair.second);
-        handlePtr->insert(strPtr, valPtr);
-    });
+    auto load = [](const decltype(testData)& data, decltype(handlePtr)& handlePtr) -> void {
+        std::for_each(std::begin(data), std::end(data), [&handlePtr](auto pair) {
+            std::cout << "insert: " << "(" << pair.first << ", " << pair.second << ")\n";
+            auto strPtr = std::make_shared<std::string>(pair.first);
+            auto valPtr = std::make_shared<uint64_t>(pair.second);
+            handlePtr->insert(strPtr, valPtr);
+        });
+    };
+
+    std::cout << "加载数据：\n";
+    load(testData, handlePtr);
 
     std::cout << "打印：\n";
     print(handlePtr);
@@ -110,15 +114,26 @@ int main() {
 
     std::cout << "单次 deleteMin 测试：\n";
     for (size_t idx = 0; idx < sampleVector.size(); ++idx) {
-        auto sampleBit = static_cast<bool>(sampleVector[idx]);
-        auto key = keyVector[idx];
-        if (sampleBit) {
-            std::cout << "deleteMin()\n";
-            handlePtr->deleteMin();
-            std::cout << "==\n";
-            print(handlePtr);
-            std::cout << "==\n";
-        }
+        std::cout << "deleteMin()\n";
+        handlePtr->deleteMin();
+        std::cout << "==\n";
+        print(handlePtr);
+        std::cout << "==\n";
+    }
+
+    std::cout << "加载数据：\n";
+    load(testData, handlePtr);
+
+    std::cout << "打印：\n";
+    print(handlePtr);
+
+    std::cout << "单次 deleteMax 测试：\n";
+    for (size_t idx = 0; idx < sampleVector.size(); ++idx) {
+        std::cout << "deleteMax()\n";
+        handlePtr->deleteMax();
+        std::cout << "==\n";
+        print(handlePtr);
+        std::cout << "==\n";
     }
 
     return 0;
