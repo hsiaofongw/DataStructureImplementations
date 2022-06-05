@@ -656,7 +656,6 @@ namespace BST {
                 root->leftPtr = root->rightPtr->leftPtr;
                 root->rightPtr = root->rightPtr->rightPtr;
             } else {
-                std::cout << "***\n";
                 root = nullptr;
             }
         }
@@ -671,17 +670,24 @@ namespace BST {
 
         NodePtr head { root };
         while (head) {
-            if (*head->keyPtr == key) {
-                Handle::deleteNodeInPlace(head);
-                return;
-            }
-
             if (key > *head->keyPtr) {
+                if (head->rightPtr) {
+                    if (key == *head->rightPtr->keyPtr) {
+                        Handle::deleteNodeInPlace(head->rightPtr);
+                        return;
+                    }
+                }
                 head = head->rightPtr;
                 continue;
             }
 
             if (key < *head->keyPtr) {
+                if (head->leftPtr) {
+                    if (key == *head->leftPtr->keyPtr) {
+                        Handle::deleteNodeInPlace(head->leftPtr);
+                        return;
+                    }
+                }
                 head = head->leftPtr;
             }
         }
