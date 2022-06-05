@@ -195,9 +195,31 @@ int main() {
         return range;
     };
     uint8_t times = 10;
+    std::sort(std::begin(keyVector), std::end(keyVector));
+    std::cout << "keyVector: ";
+    std::for_each(std::begin(keyVector), std::end(keyVector), [](const auto& element) -> void {
+        std::cout << element << " ";
+    });
+    std::cout << "\n";
     for (decltype(times) i = 0; i < times; ++i) {
         auto range = getRange(keyVector.size());
-        std::cout << "offset: " << range.offset << ", limit: " << range.limit << "\n";
+
+        auto beginKey = keyVector[range.offset];
+        auto endKey = keyVector[range.offset + range.limit - 1];
+        std::cout
+            << "offset: " << range.offset
+            << ", limit: " << range.limit
+            << ", begin: " << beginKey
+            << ", end: " << endKey;
+
+        std::cout << " nodes: ";
+
+        auto resultVectorPtr = handlePtr->rangeSearchMany(beginKey, endKey);
+        const auto& resultVector = *resultVectorPtr;
+        for (const auto& elementRef : resultVector) {
+            std::cout << "(" << (*elementRef->keyPtr) << ", " << (*elementRef->valuePtr) << ") ";
+        }
+        std::cout << "\n";
     }
 
     return 0;
