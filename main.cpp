@@ -170,6 +170,36 @@ int main() {
         std::cout << "==\n";
     }
 
+    std::cout << "加载数据：\n";
+    load(testData, handlePtr);
+
+    std::cout << "打印：\n";
+    print(handlePtr);
+
+    std::cout << "随机范围 slicing 操作测试：\n";
+    struct SliceSpec {
+        size_t offset;
+        size_t limit;
+    };
+    auto getRange = [](size_t keySize) -> SliceSpec {
+        auto range = SliceSpec {};
+        auto randomDev = std::random_device {};
+        auto randomNg = std::default_random_engine { randomDev() };
+        auto offsetDistrib = std::uniform_int_distribution<size_t> {0, keySize - 1 };
+        auto offset = static_cast<size_t>(offsetDistrib(randomNg));
+        auto lengthDistrib = std::uniform_int_distribution<size_t> { 1, keySize - offset };
+        auto limit = static_cast<size_t>(lengthDistrib(randomNg));
+        range.offset = offset;
+        range.limit = limit;
+
+        return range;
+    };
+    uint8_t times = 10;
+    for (decltype(times) i = 0; i < times; ++i) {
+        auto range = getRange(keyVector.size());
+        std::cout << "offset: " << range.offset << ", limit: " << range.limit << "\n";
+    }
+
     return 0;
 
     std::cout << "删除测试：\n";
