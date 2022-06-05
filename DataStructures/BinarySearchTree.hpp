@@ -644,11 +644,7 @@ namespace BST {
                 NodePtr minR = Handle::min(root->rightPtr);
                 root->keyPtr = minR->keyPtr;
                 root->valuePtr = minR->valuePtr;
-                if (minR == root->rightPtr) {
-                    root->rightPtr = root->rightPtr->rightPtr;
-                } else {
-                    Handle::deleteMin(root->rightPtr);
-                }
+                Handle::deleteMin(root->rightPtr);
             } else if (root->leftPtr) {
                 root->keyPtr = root->leftPtr->keyPtr;
                 root->valuePtr = root->leftPtr->valuePtr;
@@ -660,6 +656,7 @@ namespace BST {
                 root->leftPtr = root->rightPtr->leftPtr;
                 root->rightPtr = root->rightPtr->rightPtr;
             } else {
+                std::cout << "***\n";
                 root = nullptr;
             }
         }

@@ -136,6 +136,40 @@ int main() {
         std::cout << "==\n";
     }
 
+    std::cout << "加载数据：\n";
+    load(testData, handlePtr);
+
+    std::cout << "打印：\n";
+    print(handlePtr);
+
+    std::cout << "随机删除测试：\n";
+    for (size_t idx = 0; idx < sampleVector.size(); ++idx) {
+        auto sampleBit = static_cast<bool>(sampleVector[idx]);
+        if (sampleBit) {
+            const auto& key = keyVector[idx];
+            std::cout << "deleteKey(" << key << ")\n";
+            handlePtr->deleteKey(key);
+            std::cout << "==\n";
+            print(handlePtr);
+            std::cout << "==\n";
+        }
+    }
+
+    std::cout << "加载数据：\n";
+    load(testData, handlePtr);
+
+    std::cout << "打印：\n";
+    print(handlePtr);
+
+    std::cout << "全量删除测试：\n";
+    for (const auto& key : keyVector) {
+        std::cout << "deleteKey(" << key << ")\n";
+        handlePtr->deleteKey(key);
+        std::cout << "==\n";
+        print(handlePtr);
+        std::cout << "==\n";
+    }
+
     return 0;
 
     std::cout << "删除测试：\n";
