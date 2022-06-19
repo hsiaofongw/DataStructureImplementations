@@ -62,14 +62,13 @@ int main() {
     for (const auto& pair : testData) {
         auto keyPtr = std::make_shared<SimpleKeyType>(pair.first);
         auto valuePtr = std::make_shared<SimpleValueType>(pair.second);
-        std::cout << "Insert: (" << pair.first << ", " << pair.second << ")\n";
-        if (*keyPtr == "C") {
-            std::cout << "";
-        }
+//        std::cout << "Insert: (" << pair.first << ", " << pair.second << ")\n";
         root = SimpleRedBlackHandle::insert(root, keyPtr, valuePtr);
-        SimpleRedBlackHandle::debugPrintTreeExpr(root);
-        std::cout << "\n";
+//        SimpleRedBlackHandle::debugPrintTreeExpr(root);
+//        std::cout << "\n";
     }
+
+    SimpleRedBlackHandle::debugCheckDefinition(root);
 
     return 0;
 }

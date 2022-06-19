@@ -8,6 +8,10 @@
 #include <memory>
 #include <string>
 #include <iostream>
+#include <deque>
+#include <vector>
+#include <functional>
+#include <algorithm>
 
 /** 表颜色 */
 enum class LinkType {
@@ -43,6 +47,7 @@ class RedBlackTreeHandle {
 
 public:
 
+    /** 获取一颗红黑树上存储的键值对的数量 */
     static size_t getSize(NodePtr root) {
         if (root) {
             return root->size;
@@ -158,7 +163,150 @@ public:
         }
     }
 
+    /**
+     * 检验红黑树定义是否被满足：
+     *
+     * 定义 1（Red-Black BST): 一个 Red-Black BST 是满足下列要求的 BST:
+     *
+     * (1) 红边总是指左；
+     * (2) 每个节点都不会同时出现两个红边；
+     * (3) 从根节点到每一个空边的路径中经过的黑边的数量都是相等的；
+     */
+     static bool debugCheckDefinition(NodePtr root) {
+
+         auto pass = checkDef1_1(root) && checkDef1_2(root) && checkDef1_3(root);
+         std::cout << "Checking definition 1 ... ";
+         std::cout << pass << "\n";
+         return pass;
+     }
+
 private:
+
+    /** 检验定义 1 的条件 (1) */
+    static bool checkDef1_1(NodePtr root) {
+        std::cout << "Checking condition (1) of definition 1 ... ";
+        bool pass = doCheckDef1_1Recursive(root);
+        std::cout << pass << "\n";
+        return pass;
+    }
+    static bool doCheckDef1_1Recursive(NodePtr root) {
+        if (root) {
+            bool checkLeft = false;
+                checkLeft = doCheckDef1_1Recursive(root->left);
+
+            bool checkRight = false;
+            checkRight = doCheckDef1_1Recursive(root->right);
+            if (root->right) {
+                if (isRed(root->right)) {
+                    return false;
+                }
+            }
+
+            return checkLeft && checkRight;
+        }
+
+        return true;
+    }
+
+    /** 检验定义 1 的条件 (2) */
+    static bool checkDef1_2(NodePtr root) {
+        std::cout << "Checking condition (2) of definition 1 ... ";
+        bool pass = doCheckDef1_2Recursive(root);
+        std::cout << pass << "\n";
+        return pass;
+    }
+    static bool doCheckDef1_2Recursive(NodePtr root) {
+        if (root) {
+            if (root->left && root->right) {
+                if (isRed(root->left) && isRed(root->right)) {
+                    return false;
+                }
+            }
+
+            return doCheckDef1_2Recursive(root->left) && doCheckDef1_2Recursive(root->right);
+        }
+
+        return true;
+    }
+
+    /** 检验定义 1 的条件 (3) */
+    static bool checkDef1_3(NodePtr root) {
+        std::cout << "Traversing every path from root to nil ... \n";
+        std::deque<NodePtr> path {};
+        std::vector<std::deque<NodePtr>> paths {};
+        std::vector<size_t> heights {};
+        auto onPathAdded = [](
+                std::deque<NodePtr>& path,
+                size_t height,
+                std::vector<std::deque<NodePtr>>& paths,
+                std::vector<size_t>& heights
+        ) -> void {
+            std::cout << "Path: ";
+            size_t segmentIndex = 0;
+            for (const auto& segment : path) {
+                if (segmentIndex != 0) {
+                    if (segment->color == LinkType::RED) {
+                        std::cout << " -- ";
+                    } else {
+                        std::cout << " --> ";
+                    }
+                }
+                std::cout << (*segment->key);
+                ++segmentIndex;
+            }
+            std::cout << " -> (nil), ";
+            std::cout << "Height: ";
+            std::cout << height;
+            std::cout << "\n";
+        };
+
+        traverseAllPaths(
+                root,
+                0,
+                path,
+                paths,
+                heights,
+                onPathAdded
+        );
+
+        auto beginIt = std::begin(heights);
+        auto endIt = std::end(heights);
+        auto minHeight = std::min_element(beginIt, endIt);
+        auto maxHeight = std::max_element(beginIt, endIt);
+
+        std::cout << "Checking condition (3) of definition 1 ... ";
+        auto pass = *minHeight == *maxHeight;
+        std::cout << pass << "\n";
+        return pass;
+    }
+
+    /** 递归遍历每一条路径，到达 nil 链的时候将路径以及路径长度记录下来 */
+    static void traverseAllPaths(
+            NodePtr root,
+            size_t height,
+            std::deque<NodePtr>& path,
+            std::vector<std::deque<NodePtr>>& paths,
+            std::vector<size_t>& heights,
+            const std::function<void (
+                    std::deque<NodePtr>& path,
+                    size_t height,
+                    std::vector<std::deque<NodePtr>>& paths,
+                    std::vector<size_t>& heights
+            )>& onPathAdded
+    ) {
+        if (root) {
+            path.emplace_back(root);
+            traverseAllPaths(root->left, isRed(root->left) ? height : height + 1, path, paths, heights, onPathAdded);
+            traverseAllPaths(root->right, isRed(root->right) ? height: height + 1, path, paths, heights, onPathAdded);
+            path.pop_back();
+        }
+        else {
+            paths.emplace_back(std::deque<NodePtr> { path });
+            heights.push_back(height);
+
+            onPathAdded(path, height, paths, heights);
+        }
+    }
 
     /** 从左到右旋转，右旋 */
     static NodePtr rotateRight(NodePtr root) {
