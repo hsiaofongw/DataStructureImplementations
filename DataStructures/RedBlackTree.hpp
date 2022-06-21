@@ -180,6 +180,11 @@ public:
          return pass;
      }
 
+     /** 删除红黑树中最小的 key 对应的节点，返回一个指针指向删除了最小节点之后的树 */
+     static NodePtr deleteMin(NodePtr root) {
+         return doDeleteMin(root);
+     }
+
 private:
 
     /** 检验定义 1 的条件 (1) */
@@ -438,6 +443,133 @@ private:
         }
 
         return root;
+    }
+
+    /** 判定是否是 2-Node */
+    static bool is2Node(NodePtr root) {
+        if (root) {
+            if (root->left && isBlack(root->left) && root->right && isBlack(root->right)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** 判定是否是 3-Node */
+    static bool is3Node(NodePtr root) {
+        if (root) {
+            if (root->left && isRed(root->left) && root->right && isBlack(root->right)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** 判定是否是 4-Node */
+    static bool is4Node(NodePtr root) {
+        if (root) {
+            if (root->left && root->right && isRed(root->left) && isRed(root->right)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** 删除 key 最小的节点 */
+    static NodePtr doDeleteMin(NodePtr root) {
+        // 在根节点部位，先进行一下预处理：
+
+        // case 0:
+        // root 指向一颗空树（没有任何节点的树），则原样返回
+        if (!root) {
+            return root;
+        }
+
+        // case 1:
+        // root 是一个 2-Node, root->left 是一个 2-Node, root->right 也是一个 2-Node.
+        // 这种情况下我们选择合并, 把 root->left, root, root->right 放置到同一层
+        if (is2Node(root) && is2Node(root->left) && is2Node(root->right)) {
+            merge2Nodes(root);
+        }
+
+        // case 2:
+        // root 是一个 2-Node, root->left 是一个 2-Node, 但是 root->right 是一个 3-Node.
+        // 这种情况下我们选择将 root 移往左，而原先 root->right 的左子节点接替 root
+        else if (is2Node(root) && is2Node(root->left) && is3Node(root->right)) {
+            root = moveSibling(root);
+        }
+
+        // case 3:
+        // root 是一个 3-Node, root->left->left 是一个 2-Node,
+        // 无论 root->left->right 是不是 2-Node, 这类情况都会在递归下降的过程中得到妥善处置。
+        else {
+            ; // No op.
+        }
+
+        // 其他边边角角情况处理：
+        if (!root->right) {
+            root->left = nullptr;
+            return root;
+        }
+        if (!root->left) {
+            return root;
+        }
+
+        root = doDeleteMinRecursive(root);
+    }
+
+    static NodePtr doDeleteMinRecursive(NodePtr root) {
+        // 经过 doDeleteMin 函数的初步处理，到这里时，root 已经不再可能是一个 2-Node，只可能会是 3-Node 或者 4-Node.
+        if (root) {
+            if (root->left && isRed(root->left)) {
+                // 总是会执行到这里
+                if (root->left->left) {
+                    // 还有下一层，判定一下它的最左直接 child 是不是 2-Node,
+                    // 如果是，还要进行相应的处理，把它转为非 2-Node.
+                    if (is2Node(root->left->left)) {
+                        if (is2Node(root->left->right)) {
+                            root->left = merge2Nodes(root->left);
+                            root->left->color = LinkType::BLACK;
+                        } else if (is3Node(root->left->right)) {
+                            root->left = moveSibling(root->left);
+                        } else {
+                            ; // No op.
+                        }
+                    }
+                    root->left = doDeleteMinRecursive(root->left);
+                } else {
+                    // 到达最底层
+                    if (is3Node(root)) {
+                        root->left = nullptr;
+                        return root;
+                    } else if (is4Node(root)) {
+                        root->left = nullptr;
+                        return rotateLeft(root);
+                    } else {
+                        ; // No op.
+                    }
+                }
+
+                if (isRed(root->left) && root->left->left && isRed(root->left->left)) {
+                    root = rotateRight(root);
+                }
+
+                if ((!isRed(root->left)) && isRed(root->right)) {
+                    root = rotateLeft(root);
+                }
+
+                if (isRed(root->left) && isRed(root->right)) {
+                    flipColor(root);
+                }
+
+                return root;
+            }
+        }
+
+        assert((false));
     }
 };
 
