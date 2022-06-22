@@ -438,7 +438,7 @@ private:
      * 2(2, 3) => 2(3, 2), 2(2, 4) => 2(3, 3)
      * b(a, cd) => c(ab, d), b(a, cde) => c(ab, de)
      */
-    static NodePtr moveSibling(NodePtr root) {
+    static NodePtr moveSiblingFromRight(NodePtr root) {
         if (root && root->left && root->right && isRed(root->right->left)) {
             root->left->color = LinkType::RED;
             root->right = rotateRight(root->right);
@@ -446,13 +446,36 @@ private:
             NodePtr newRoot = rotateLeft(root);
             newRoot->left->color = LinkType::BLACK;
             newRoot->right->color = LinkType::BLACK;
-
             newRoot->color = originColor;
+
+            updateSize(root->left->left);
+            updateSize(root->left);
+            updateSize(root->right);
+            updateSize(root);
 
             return newRoot;
         }
 
-        // Trying to moveSibling a NodePtr that shouldn't.
+        // Trying to moveSiblingFromRight a NodePtr that shouldn't.
+        assert((false));
+    }
+
+    static NodePtr moveSiblingFromLeft(NodePtr root) {
+        if (root && root->left && isRed(root->left->left) && root->right) {
+            LinkType originColor = root->color;
+            NodePtr newRoot = rotateRight(root);
+            newRoot->color = originColor;
+            newRoot->left->color = LinkType::BLACK;
+            newRoot->right->color = LinkType::BLACK;
+            newRoot->right = rotateLeft(newRoot->right);
+
+            updateSize(root->right->left);
+            updateSize(root->right);
+            updateSize(root);
+
+            return newRoot;
+        }
+
         assert((false));
     }
 
@@ -528,7 +551,7 @@ private:
                         merge2Nodes(root);
                         root = doDeleteMinRecursive(root);
                     } else if (is3Node(root->right)) {
-                        root = moveSibling(root);
+                        root = moveSiblingFromRight(root);
                         root->left = doDeleteMinRecursive(root->left);
                     } else {
                         // root->left point to a 2-Node, but root->right is neither 2-Node nor 3-Node
@@ -550,7 +573,6 @@ private:
 
         return root;
     }
-
     static NodePtr doDeleteMinRecursive(NodePtr root) {
         // 经过 doDeleteMin 函数的初步处理，到这里时，root 已经不再可能是一个 2-Node，只可能会是 3-Node 或者 4-Node.
         if (is3Node(root) || is4Node(root)) {
@@ -564,7 +586,7 @@ private:
                     updateSize(root->left);
                     updateSize(root);
                 } else if (is3Node(nextLevelRight)) {
-                    root->left = moveSibling(root->left);
+                    root->left = moveSiblingFromRight(root->left);
                     root->left->left = doDeleteMinRecursive(root->left->left);
                     updateSize(root->left->left);
                     updateSize(root->left);
@@ -613,6 +635,144 @@ private:
         } else {
             return nullptr;
         }
+    }
+
+    /** 交换一个 2-Node 的两个节点的位置 */
+    static void swap2Node(NodePtr root) {
+        if (root && root->left && root->right) {
+            NodePtr tmp = root->left;
+            root->left = root->right;
+            root->right = tmp;
+        }
+    }
+
+    /** Delete root in a 2-Node where left child is a 3-Node */
+    static NodePtr deleteRootInA2NodeWhereLeftChildIsA3Node(NodePtr root) {
+        NodePtr newRoot = root->left;
+        LinkType originColor = root->color;
+        newRoot->left->color = LinkType::BLACK;
+        newRoot->right = root->right;
+        updateSize(newRoot);
+        newRoot->color = originColor;
+        return newRoot;
+    }
+
+    /** Delete root in a 2-Node where right child is a 3-Node */
+    static NodePtr deleteRootInA2NodeWhereRightChildIsA3Node(NodePtr root) {
+        NodePtr newRoot = root->right->left;
+        LinkType originColor = root->color;
+        root->right->left = newRoot->left;
+        newRoot->left = root->left;
+        root->right->right = newRoot->right;
+        newRoot->right = root->right;
+        newRoot->color = originColor;
+        updateSize(newRoot);
+        return newRoot;
+    }
+
+    /** 删除给定 key 对应的节点，从而让相应的键值对被删除掉 */
+    static NodePtr doDeleteNodeByKey(NodePtr root, const KeyT& key) {
+        if (is2Node(root)) {
+            // 也是做类似 doDeleteMin 开头那样的预处理
+
+            // 考虑这个 2-Node 的两个 child 都是 2-Node 的情况，这种的就直接合并
+            if (is2Node(root->left) && is2Node(root->right)) {
+                merge2Nodes(root);
+                root = doDeleteNodeByKeyRecursive(root, key);
+                updateSize(root);
+                return root;
+            }
+
+            // 假如说 root->left 是 null 呢？那么根据红黑树的黑平衡性，root->right 也是。
+            // 那也就是说 root 就是这棵树唯一的节点，所以就只拿 key 和 *root->key 比较是否相等就足够了
+            if (!(root->left)) {
+                if (key == *root->key) {
+                    return nullptr;    // key 匹配，就删除这个节点
+                } else {
+                    return root;    // key 不匹配，不删除任何节点
+                }
+            }
+
+            // 现在 root->left 和 root->right 都不为 null
+            // 并且，root->left 或者 root->right 中至少一个为 3-Node, 还有可能两个都是的
+            // 先看一下 key 和当前 key 也就是 *root->key 的相对大小如何
+            if (key > *root->key) {
+
+            } else if (key < *root->key) {
+
+            } else {
+                // root 本身就是那个要被删除的节点，
+                // 不用担心，反正我们知道 root->left 和 root->right 至少有一个是 3-Node.
+                if (is3Node(root->left)) {
+                    return deleteRootInA2NodeWhereLeftChildIsA3Node(root);
+                } else if (is3Node(root->right)) {
+                    return deleteRootInA2NodeWhereRightChildIsA3Node(root);
+                } else {
+                    assert((false)); // Never.
+                }
+            }
+
+            bool changeBack = false;
+            if (key > *root->key) {
+                changeBack = true;
+                swap2Node(root);
+            } else if (key < *root->key) {
+                ;    // No op.
+            } else {
+
+            }
+
+            if (changeBack) {
+                swap2Node(root);
+            }
+
+            if (key > *root->key) {
+                if (is2Node(root->right)) {
+                    if (is2Node(root->left)) {
+                        merge2Nodes(root);
+                        return doDeleteNodeByKeyRecursive(root, key);
+                    } else if (is3Node(root->left)) {
+                        root = moveSiblingFromLeft(root);
+                        root->right = doDeleteNodeByKeyRecursive(root->right, key);
+                        updateSize(root);
+                        return root;
+                    } else {
+                        assert((false));
+                    }
+                } else if (is3Node(root->right)) {
+                    root->right = doDeleteNodeByKeyRecursive(root->right, key);
+                    updateSize(root);
+                    return root;
+                } else {
+                    assert((false));
+                }
+            } else if (key < *root->key) {
+
+            } else {
+
+            }
+
+            if (is2Node(root->left) && is2Node(root->right)) {
+                merge2Nodes(root);
+                return doDeleteNodeByKeyRecursive(root, key);
+            } else if (is2Node(root->left) && is3Node(root->left)) {
+                root = moveSiblingFromRight(root);
+                root->left = doDeleteNodeByKeyRecursive(root->left, key);
+                return root;
+            } else if (is3Node(root->left) && is2Node(root->right)) {
+
+            }
+        } else if (is3Node(root)) {
+            // 直接调用递归过程，因为在此处 root 本身的非 2 性已经得到了保证。
+            return doDeleteNodeByKeyRecursive(root, key);
+        } else {
+            // root 大概率本身就是个空指针
+            return root;
+        }
+    }
+
+    static NodePtr doDeleteNodeByKeyRecursive(NodePtr root, const KeyT& key) {
+        return nullptr;
     }
 };
 
