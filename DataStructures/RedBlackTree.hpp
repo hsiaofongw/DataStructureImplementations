@@ -402,8 +402,8 @@ private:
             root->left->color = LinkType::RED;
             root->right = rotateRight(root->right);
             NodePtr newRoot = rotateLeft(root);
-            newRoot->left = LinkType::BLACK;
-            newRoot->right = LinkType::BLACK;
+            newRoot->left->color = LinkType::BLACK;
+            newRoot->right->color = LinkType::BLACK;
 
             if (newRoot->right && newRoot->right->right) {
                 newRoot->right = rotateLeft(newRoot->right);
@@ -448,7 +448,7 @@ private:
     /** 判定是否是 2-Node */
     static bool is2Node(NodePtr root) {
         if (root) {
-            if (root->left && isBlack(root->left) && root->right && isBlack(root->right)) {
+            if ((!isRed(root->left)) && (!isRed(root->right))) {
                 return true;
             }
         }
@@ -458,10 +458,8 @@ private:
 
     /** 判定是否是 3-Node */
     static bool is3Node(NodePtr root) {
-        if (root) {
-            if (root->left && isRed(root->left) && root->right && isBlack(root->right)) {
-                return true;
-            }
+        if (root && isRed(root->left) && (!isRed(root->right))) {
+            return true;
         }
 
         return false;
@@ -469,10 +467,8 @@ private:
 
     /** 判定是否是 4-Node */
     static bool is4Node(NodePtr root) {
-        if (root) {
-            if (root->left && root->right && isRed(root->left) && isRed(root->right)) {
-                return true;
-            }
+        if (root && isRed(root->left) && isRed(root->right)) {
+            return true;
         }
 
         return false;
@@ -481,95 +477,84 @@ private:
     /** 删除 key 最小的节点 */
     static NodePtr doDeleteMin(NodePtr root) {
         // 在根节点部位，先进行一下预处理：
-
-        // case 0:
-        // root 指向一颗空树（没有任何节点的树），则原样返回
-        if (!root) {
-            return root;
+        // 主要针对的是当 root 为 2-Node 时 root->left 为 2-Node 或者当 root 为 3-Node 时，root->left->left 为 2-Node 的情况。
+        if (root) {
+            if (is2Node(root)) {
+                if (is2Node(root->left)) {
+                    if (is2Node(root->right)) {
+                        merge2Nodes(root);
+                        root = doDeleteMinRecursive(root);
+                    } else if (is3Node(root->right)) {
+                        root->left = moveSibling(root->left);
+                        root->left->color = LinkType::BLACK;
+                        root->left = doDeleteMinRecursive(root->left);
+                    } else {
+                        // root->left point to a 2-Node, but root->right is neither 2-Node nor 3-Node
+                        assert((false));
+                    }
+                } else {
+                    // root->left could point to a 3-Node or itself is a nil
+                    root->left = doDeleteMinRecursive(root->left);
+                }
+            } else if (is3Node(root)) {
+                root = doDeleteMinRecursive(root);
+            } else {
+                assert((false));
+            }
         }
 
-        // case 1:
-        // root 是一个 2-Node, root->left 是一个 2-Node, root->right 也是一个 2-Node.
-        // 这种情况下我们选择合并, 把 root->left, root, root->right 放置到同一层
-        if (is2Node(root) && is2Node(root->left) && is2Node(root->right)) {
-            merge2Nodes(root);
-        }
-
-        // case 2:
-        // root 是一个 2-Node, root->left 是一个 2-Node, 但是 root->right 是一个 3-Node.
-        // 这种情况下我们选择将 root 移往左，而原先 root->right 的左子节点接替 root
-        else if (is2Node(root) && is2Node(root->left) && is3Node(root->right)) {
-            root = moveSibling(root);
-        }
-
-        // case 3:
-        // root 是一个 3-Node, root->left->left 是一个 2-Node,
-        // 无论 root->left->right 是不是 2-Node, 这类情况都会在递归下降的过程中得到妥善处置。
-        else {
-            ; // No op.
-        }
-
-        // 其他边边角角情况处理：
-        if (!root->right) {
-            root->left = nullptr;
-            return root;
-        }
-        if (!root->left) {
-            return root;
-        }
-
-        root = doDeleteMinRecursive(root);
+        return root;
     }
 
     static NodePtr doDeleteMinRecursive(NodePtr root) {
         // 经过 doDeleteMin 函数的初步处理，到这里时，root 已经不再可能是一个 2-Node，只可能会是 3-Node 或者 4-Node.
-        if (root) {
-            if (root->left && isRed(root->left)) {
-                // 总是会执行到这里
-                if (root->left->left) {
-                    // 还有下一层，判定一下它的最左直接 child 是不是 2-Node,
-                    // 如果是，还要进行相应的处理，把它转为非 2-Node.
-                    if (is2Node(root->left->left)) {
-                        if (is2Node(root->left->right)) {
-                            root->left = merge2Nodes(root->left);
-                            root->left->color = LinkType::BLACK;
-                        } else if (is3Node(root->left->right)) {
-                            root->left = moveSibling(root->left);
-                        } else {
-                            ; // No op.
-                        }
-                    }
-                    root->left = doDeleteMinRecursive(root->left);
+        if (is3Node(root) || is4Node(root)) {
+            NodePtr nextLevelLeft = root->left->left;
+            NodePtr nextLevelRight = root->left->right;
+            if (is2Node(nextLevelLeft)) {
+                if (is2Node(nextLevelRight)) {
+                    merge2Nodes(root->left);
+                    root->left->color = LinkType::BLACK;
+                } else if (is3Node(nextLevelRight) || is4Node(nextLevelRight)) {
+                    root->left = moveSibling(root->left);
                 } else {
-                    // 到达最底层
-                    if (is3Node(root)) {
-                        root->left = nullptr;
-                        return root;
-                    } else if (is4Node(root)) {
-                        root->left = nullptr;
-                        return rotateLeft(root);
-                    } else {
-                        ; // No op.
-                    }
+                    assert((false));
                 }
-
-                if (isRed(root->left) && root->left->left && isRed(root->left->left)) {
-                    root = rotateRight(root);
+                root->left = doDeleteMinRecursive(root->left);
+            } else if (is3Node(nextLevelLeft) || is4Node(nextLevelLeft)) {
+                root->left = doDeleteMinRecursive(root->left);
+            } else {
+                // 到达最底层
+                if (is3Node(root)) {
+                    root->left = nullptr;
+                    return root;
+                } else if (is4Node(root)) {
+                    root->left = nullptr;
+                    NodePtr newRoot = rotateLeft(root);
+                    return newRoot;
+                } else {
+                    return nullptr;
                 }
-
-                if ((!isRed(root->left)) && isRed(root->right)) {
-                    root = rotateLeft(root);
-                }
-
-                if (isRed(root->left) && isRed(root->right)) {
-                    flipColor(root);
-                }
-
-                return root;
             }
-        }
 
-        assert((false));
+            // 后续处理
+            if (isRed(root->left) && isRed(root->left->left)) {
+                // 条件 isRed(root->left) 蕴含了 root->left 不为 null
+                root = rotateRight(root);
+            }
+
+            if ((!isRed(root->left)) && isRed(root->right)) {
+                root = rotateLeft(root);
+            }
+
+            if (isRed(root->left) && isRed(root->right)) {
+                flipColor(root);
+            }
+
+            return root;
+        } else {
+            return nullptr;
+        }
     }
 };
 

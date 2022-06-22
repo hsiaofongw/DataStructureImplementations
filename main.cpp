@@ -70,5 +70,12 @@ int main() {
 
     SimpleRedBlackHandle::debugCheckDefinition(root);
 
+    for (const auto& _ : testData) {
+        root = SimpleRedBlackHandle::deleteMin(root);
+        SimpleRedBlackHandle::debugPrintTreeExpr(root);
+        std::cout << "\n";
+        SimpleRedBlackHandle::debugCheckDefinition(root);
+    }
+
     return 0;
 }
