@@ -184,6 +184,13 @@ public:
 
 private:
 
+    /** 尝试更新一个节点的 size */
+    static void updateSize(NodePtr root) {
+        if (root) {
+            root->size = 1 + getSize(root->left) + getSize(root->right);
+        }
+    }
+
     /** 检验定义 1 的条件 (1) */
     static bool checkDef1_1(NodePtr root, bool suppressDebug = false) {
         if (!suppressDebug) {
@@ -357,7 +364,7 @@ private:
         result->color = root->color;
         root->color = LinkType::RED;
         result->size = root->size;
-        root->size = 1 + getSize(root->left) + getSize(root->right);
+        updateSize(root);
 
         return result;
     }
@@ -372,7 +379,7 @@ private:
         result->color = root->color;
         root->color = LinkType::RED;
         result->size = root->size;
-        root->size = 1 + getSize(root->left) + getSize(root->right);
+        updateSize(root);
 
         return result;
     }
@@ -476,7 +483,7 @@ private:
             flipColor(root);
         }
 
-        root->size = 1 + getSize(root->left) + getSize(root->right);
+        updateSize(root);
 
         return root;
     }
@@ -537,6 +544,8 @@ private:
             } else {
                 assert((false));
             }
+
+            updateSize(root);
         }
 
         return root;
@@ -552,22 +561,32 @@ private:
                     merge2Nodes(root->left);
                     root->left->color = LinkType::BLACK;
                     root->left = doDeleteMinRecursive(root->left);
+                    updateSize(root->left);
+                    updateSize(root);
                 } else if (is3Node(nextLevelRight)) {
                     root->left = moveSibling(root->left);
                     root->left->left = doDeleteMinRecursive(root->left->left);
+                    updateSize(root->left->left);
+                    updateSize(root->left);
+                    updateSize(root);
                 } else {
                     assert((false));
                 }
             } else if (is3Node(nextLevelLeft) || is4Node(nextLevelLeft)) {
                 root->left->left = doDeleteMinRecursive(root->left->left);
+                updateSize(root->left->left);
+                updateSize(root->left);
+                updateSize(root);
             } else {
                 // 到达最底层
                 if (is3Node(root)) {
                     root->left = nullptr;
+                    updateSize(root);
                     return root;
                 } else if (is4Node(root)) {
                     root->left = nullptr;
                     NodePtr newRoot = rotateLeft(root);
+                    updateSize(newRoot);
                     return newRoot;
                 } else {
                     return nullptr;
@@ -587,6 +606,8 @@ private:
             if (isRed(root->left) && isRed(root->right)) {
                 flipColor(root);
             }
+
+            updateSize(root);
 
             return root;
         } else {

@@ -86,6 +86,12 @@ int main() {
 
     SimpleRedBlackHandle::debugCheckDefinition(root);
 
+    std::cout << "Start deleteMin test:\n";
+    std::cout << "Before deleteMin:\n";
+    SimpleRedBlackHandle::debugPrintTreeExpr(root);
+    std::cout << "\n";
+    std::cout << "Size: " << (root ? root->size : 0) << "\n";
+
     for (size_t i = 0; i < testData.size(); ++i) {
         std::cout << "deleteMin called " << i << " time(s):\n";
         root = SimpleRedBlackHandle::deleteMin(root);
