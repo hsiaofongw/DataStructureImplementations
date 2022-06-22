@@ -697,9 +697,53 @@ private:
             // 并且，root->left 或者 root->right 中至少一个为 3-Node, 还有可能两个都是的
             // 先看一下 key 和当前 key 也就是 *root->key 的相对大小如何
             if (key > *root->key) {
-
+                if (is3Node(root->right)) {
+                    root->right = doDeleteNodeByKeyRecursive(root->right, key);
+                    updateSize(root);
+                    return root;
+                } else {
+                    // 从左边移一个过来
+                    NodePtr left = root->left;
+                    NodePtr right = root->right;
+                    NodePtr newRoot = left;
+                    root->left = left->right;
+                    root->right = right->left;
+                    LinkType originColor = root->color;
+                    newRoot->left->color = LinkType::BLACK;
+                    newRoot->color = originColor;
+                    newRoot->right = right;
+                    right->left = root;
+                    right->left->color = LinkType::RED;
+                    updateSize(newRoot->right);
+                    updateSize(newRoot);
+                    newRoot->right = doDeleteNodeByKeyRecursive(newRoot->right, key);
+                    updateSize(newRoot);
+                    return newRoot;
+                }
             } else if (key < *root->key) {
-
+                if (is3Node(root->left)) {
+                    root->left = doDeleteNodeByKeyRecursive(root->left, key);
+                    updateSize(root);
+                    return root;
+                } else {
+                    // 从右边移一个过来
+                    NodePtr right = root->right;
+                    NodePtr newRoot = right->left;
+                    LinkType originColor = root->color;
+                    root->right = newRoot->left;
+                    right->left = newRoot->right;
+                    newRoot->left = root->left;
+                    newRoot->right = right;
+                    newRoot->left->left->color = LinkType::RED;
+                    newRoot->left->color = LinkType::BLACK;
+                    newRoot->right->color = LinkType::BLACK;
+                    newRoot->color = originColor;
+                    updateSize(newRoot->left);
+                    updateSize(newRoot);
+                    newRoot->left = doDeleteNodeByKeyRecursive(newRoot->left, key);
+                    updateSize(newRoot);
+                    return newRoot;
+                }
             } else {
                 // root 本身就是那个要被删除的节点，
                 // 不用担心，反正我们知道 root->left 和 root->right 至少有一个是 3-Node.
@@ -710,57 +754,6 @@ private:
                 } else {
                     assert((false)); // Never.
                 }
-            }
-
-            bool changeBack = false;
-            if (key > *root->key) {
-                changeBack = true;
-                swap2Node(root);
-            } else if (key < *root->key) {
-                ;    // No op.
-            } else {
-
-            }
-
-            if (changeBack) {
-                swap2Node(root);
-            }
-
-            if (key > *root->key) {
-                if (is2Node(root->right)) {
-                    if (is2Node(root->left)) {
-                        merge2Nodes(root);
-                        return doDeleteNodeByKeyRecursive(root, key);
-                    } else if (is3Node(root->left)) {
-                        root = moveSiblingFromLeft(root);
-                        root->right = doDeleteNodeByKeyRecursive(root->right, key);
-                        updateSize(root);
-                        return root;
-                    } else {
-                        assert((false));
-                    }
-                } else if (is3Node(root->right)) {
-                    root->right = doDeleteNodeByKeyRecursive(root->right, key);
-                    updateSize(root);
-                    return root;
-                } else {
-                    assert((false));
-                }
-            } else if (key < *root->key) {
-
-            } else {
-
-            }
-
-            if (is2Node(root->left) && is2Node(root->right)) {
-                merge2Nodes(root);
-                return doDeleteNodeByKeyRecursive(root, key);
-            } else if (is2Node(root->left) && is3Node(root->left)) {
-                root = moveSiblingFromRight(root);
-                root->left = doDeleteNodeByKeyRecursive(root->left, key);
-                return root;
-            } else if (is3Node(root->left) && is2Node(root->right)) {
-
             }
         } else if (is3Node(root)) {
             // 直接调用递归过程，因为在此处 root 本身的非 2 性已经得到了保证。
