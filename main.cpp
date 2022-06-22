@@ -36,6 +36,22 @@ std::unique_ptr<std::vector<bool>> makeSampleVector(size_t population) {
 
 int main() {
 
+    auto testKeyValuePairs = std::vector<std::pair<std::string, uint64_t>> {
+            { "S", 0 },
+            { "E", 1 },
+            { "A", 2 },
+            { "R", 3 },
+            { "C", 4 },
+            { "H", 5 },
+            { "E", 6 },
+            { "X", 7 },
+            { "A", 8 },
+            { "M", 9 },
+            { "P", 10 },
+            { "L", 11 },
+            { "E", 12 }
+    };
+
     auto testData = std::unordered_map<std::string, uint64_t> {
             { "S", 0 },
             { "E", 1 },
@@ -70,11 +86,17 @@ int main() {
 
     SimpleRedBlackHandle::debugCheckDefinition(root);
 
-    for (const auto& _ : testData) {
+    for (size_t i = 0; i < testData.size(); ++i) {
+        std::cout << "deleteMin called " << i << " time(s):\n";
         root = SimpleRedBlackHandle::deleteMin(root);
+        std::cout << "After deleteMin:\n";
+        std::cout << "Size: " << (root ? root->size : 0) << "\n";
         SimpleRedBlackHandle::debugPrintTreeExpr(root);
         std::cout << "\n";
-        SimpleRedBlackHandle::debugCheckDefinition(root);
+        auto checkIntact = SimpleRedBlackHandle::debugCheckDefinition(root, true);
+        if (!checkIntact) {
+            ;
+        }
     }
 
     return 0;

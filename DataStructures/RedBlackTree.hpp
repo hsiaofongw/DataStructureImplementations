@@ -111,15 +111,13 @@ public:
 
                         // Children of 4-Node
                         std::cout << "[";
-                        if (root->left->left) {
-                            debugPrintTreeExpr(root->left->left);
-                            printSeparator();
-                            debugPrintTreeExpr(root->left->right);
-                            printSeparator();
-                            debugPrintTreeExpr(root->right->left);
-                            printSeparator();
-                            debugPrintTreeExpr(root->right->right);
-                        }
+                        debugPrintTreeExpr(root->left->left);
+                        printSeparator();
+                        debugPrintTreeExpr(root->left->right);
+                        printSeparator();
+                        debugPrintTreeExpr(root->right->left);
+                        printSeparator();
+                        debugPrintTreeExpr(root->right->right);
                         std::cout << "]";
                     } else {
                         // 3-Node
@@ -129,13 +127,11 @@ public:
 
                         // Children of 3-Node
                         std::cout << "[";
-                        if (root->left->left) {
-                            debugPrintTreeExpr(root->left->left);
-                            printSeparator();
-                            debugPrintTreeExpr(root->left->right);
-                            printSeparator();
-                            debugPrintTreeExpr(root->right);
-                        }
+                        debugPrintTreeExpr(root->left->left);
+                        printSeparator();
+                        debugPrintTreeExpr(root->left->right);
+                        printSeparator();
+                        debugPrintTreeExpr(root->right);
                         std::cout << "]";
                     }
                 } else {
@@ -147,11 +143,9 @@ public:
                     // Children of 2-Node
 
                     std::cout << "[";
-                    if (root->left) {
-                        debugPrintTreeExpr(root->left);
-                        printSeparator();
-                        debugPrintTreeExpr(root->right);
-                    }
+                    debugPrintTreeExpr(root->left);
+                    printSeparator();
+                    debugPrintTreeExpr(root->right);
                     std::cout << "]";
                 }
             } else {
@@ -172,11 +166,14 @@ public:
      * (2) 每个节点都不会同时出现两个红边；
      * (3) 从根节点到每一个空边的路径中经过的黑边的数量都是相等的；
      */
-     static bool debugCheckDefinition(NodePtr root) {
+     static bool debugCheckDefinition(NodePtr root, bool suppressDebug = false) {
 
-         auto pass = checkDef1_1(root) && checkDef1_2(root) && checkDef1_3(root);
-         std::cout << "Checking definition 1 ... ";
-         std::cout << pass << "\n";
+         auto pass = checkDef1_1(root, suppressDebug) && checkDef1_2(root, suppressDebug) && checkDef1_3(root, suppressDebug);
+         if (!suppressDebug) {
+             std::cout << "Checking definition 1... ";
+             std::cout << pass << "\n";
+         }
+
          return pass;
      }
 
@@ -188,10 +185,17 @@ public:
 private:
 
     /** 检验定义 1 的条件 (1) */
-    static bool checkDef1_1(NodePtr root) {
-        std::cout << "Checking condition (1) of definition 1 ... ";
+    static bool checkDef1_1(NodePtr root, bool suppressDebug = false) {
+        if (!suppressDebug) {
+            std::cout << "Checking condition (1) of definition 1...";
+        }
+
         bool pass = doCheckDef1_1Recursive(root);
-        std::cout << pass << "\n";
+
+        if (!suppressDebug) {
+            std::cout << pass << "\n";
+        }
+
         return pass;
     }
     static bool doCheckDef1_1Recursive(NodePtr root) {
@@ -214,10 +218,17 @@ private:
     }
 
     /** 检验定义 1 的条件 (2) */
-    static bool checkDef1_2(NodePtr root) {
-        std::cout << "Checking condition (2) of definition 1 ... ";
+    static bool checkDef1_2(NodePtr root, bool suppressDebug = false) {
+        if (!suppressDebug) {
+            std::cout << "Checking condition (2) of definition 1... ";
+        }
+
         bool pass = doCheckDef1_2Recursive(root);
-        std::cout << pass << "\n";
+
+        if (!suppressDebug) {
+            std::cout << pass << "\n";
+        }
+
         return pass;
     }
     static bool doCheckDef1_2Recursive(NodePtr root) {
@@ -235,16 +246,26 @@ private:
     }
 
     /** 检验定义 1 的条件 (3) */
-    static bool checkDef1_3(NodePtr root) {
-        std::cout << "Traversing every path from root to nil ... \n";
+    static bool checkDef1_3(NodePtr root, bool suppressDebug = false) {
+        if (!suppressDebug) {
+            std::cout << "Traversing every path from root to nil... \n";
+        }
+
         std::deque<NodePtr> path {};
         std::vector<std::deque<NodePtr>> paths {};
         std::vector<size_t> heights {};
+        auto onPathAddedDoNothing = [](
+            std::deque<NodePtr>& path,
+            size_t height,
+            std::vector<std::deque<NodePtr>>& paths,
+            std::vector<size_t>& heights
+        ) {};
+
         auto onPathAdded = [](
-                std::deque<NodePtr>& path,
-                size_t height,
-                std::vector<std::deque<NodePtr>>& paths,
-                std::vector<size_t>& heights
+            std::deque<NodePtr>& path,
+            size_t height,
+            std::vector<std::deque<NodePtr>>& paths,
+            std::vector<size_t>& heights
         ) -> void {
             std::cout << "Path: ";
             size_t segmentIndex = 0;
@@ -265,23 +286,36 @@ private:
             std::cout << "\n";
         };
 
-        traverseAllPaths(
-                root,
-                0,
-                path,
-                paths,
-                heights,
-                onPathAdded
-        );
+        if (suppressDebug) {
+            traverseAllPaths(
+                    root,
+                    0,
+                    path,
+                    paths,
+                    heights,
+                    onPathAddedDoNothing
+            );
+        } else {
+            traverseAllPaths(
+                    root,
+                    0,
+                    path,
+                    paths,
+                    heights,
+                    onPathAdded
+            );
+        }
 
         auto beginIt = std::begin(heights);
         auto endIt = std::end(heights);
         auto minHeight = std::min_element(beginIt, endIt);
         auto maxHeight = std::max_element(beginIt, endIt);
 
-        std::cout << "Checking condition (3) of definition 1 ... ";
         auto pass = *minHeight == *maxHeight;
-        std::cout << pass << "\n";
+        if (!suppressDebug) {
+            std::cout << "Checking condition (3) of definition 1... ";
+            std::cout << pass << "\n";
+        }
         return pass;
     }
 
@@ -401,18 +435,18 @@ private:
         if (root && root->left && root->right && isRed(root->right->left)) {
             root->left->color = LinkType::RED;
             root->right = rotateRight(root->right);
+            auto originColor = root->color;
             NodePtr newRoot = rotateLeft(root);
             newRoot->left->color = LinkType::BLACK;
             newRoot->right->color = LinkType::BLACK;
 
-            if (newRoot->right && newRoot->right->right) {
-                newRoot->right = rotateLeft(newRoot->right);
-            }
+            newRoot->color = originColor;
 
             return newRoot;
         }
 
-        return root;
+        // Trying to moveSibling a NodePtr that shouldn't.
+        assert((false));
     }
 
     /** 插入操作 */
@@ -441,6 +475,8 @@ private:
         if (isRed(root->left) && isRed(root->right)) {
             flipColor(root);
         }
+
+        root->size = 1 + getSize(root->left) + getSize(root->right);
 
         return root;
     }
@@ -485,16 +521,16 @@ private:
                         merge2Nodes(root);
                         root = doDeleteMinRecursive(root);
                     } else if (is3Node(root->right)) {
-                        root->left = moveSibling(root->left);
-                        root->left->color = LinkType::BLACK;
+                        root = moveSibling(root);
                         root->left = doDeleteMinRecursive(root->left);
                     } else {
                         // root->left point to a 2-Node, but root->right is neither 2-Node nor 3-Node
                         assert((false));
                     }
-                } else {
-                    // root->left could point to a 3-Node or itself is a nil
+                } else if (is3Node(root->left)) {
                     root->left = doDeleteMinRecursive(root->left);
+                } else {
+                    return nullptr;
                 }
             } else if (is3Node(root)) {
                 root = doDeleteMinRecursive(root);
@@ -515,14 +551,15 @@ private:
                 if (is2Node(nextLevelRight)) {
                     merge2Nodes(root->left);
                     root->left->color = LinkType::BLACK;
-                } else if (is3Node(nextLevelRight) || is4Node(nextLevelRight)) {
+                    root->left = doDeleteMinRecursive(root->left);
+                } else if (is3Node(nextLevelRight)) {
                     root->left = moveSibling(root->left);
+                    root->left->left = doDeleteMinRecursive(root->left->left);
                 } else {
                     assert((false));
                 }
-                root->left = doDeleteMinRecursive(root->left);
             } else if (is3Node(nextLevelLeft) || is4Node(nextLevelLeft)) {
-                root->left = doDeleteMinRecursive(root->left);
+                root->left->left = doDeleteMinRecursive(root->left->left);
             } else {
                 // 到达最底层
                 if (is3Node(root)) {
