@@ -100,9 +100,7 @@ int main() {
         SimpleRedBlackHandle::debugPrintTreeExpr(root);
         std::cout << "\n";
         auto checkIntact = SimpleRedBlackHandle::debugCheckDefinition(root, true);
-        if (!checkIntact) {
-            ;
-        }
+        assert((checkIntact));
     }
 
     return 0;
