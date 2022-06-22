@@ -2,6 +2,7 @@
 #include <random>
 #include <unordered_map>
 #include <map>
+#include <set>
 #include "DataStructures/RedBlackTree.hpp"
 
 bool verifyTwoNumberListIdentical(const std::vector<uint64_t>& lst1, const std::vector<uint64_t>& lst2) {
@@ -52,21 +53,12 @@ int main() {
             { "E", 12 }
     };
 
-    auto testData = std::unordered_map<std::string, uint64_t> {
-            { "S", 0 },
-            { "E", 1 },
-            { "A", 2 },
-            { "R", 3 },
-            { "C", 4 },
-            { "H", 5 },
-            { "E", 6 },
-            { "X", 7 },
-            { "A", 8 },
-            { "M", 9 },
-            { "P", 10 },
-            { "L", 11 },
-            { "E", 12 }
-    };
+    auto uniqueKeys = std::set<std::string> {};
+    for (const auto &pair : testKeyValuePairs) {
+        uniqueKeys.insert(pair.first);
+    }
+
+    std::cout << "Unique Keys: " << uniqueKeys.size() << "\n";
 
     using SimpleKeyType = std::string;
     using SimpleValueType = uint64_t;
@@ -75,13 +67,16 @@ int main() {
     using SimpleRedBlackHandle = RedBlackTreeHandle<SimpleKeyType, SimpleValueType>;
 
     auto root = SimpleRedBlackNodePtr {};
-    for (const auto& pair : testData) {
+    for (const auto& pair : testKeyValuePairs) {
         auto keyPtr = std::make_shared<SimpleKeyType>(pair.first);
         auto valuePtr = std::make_shared<SimpleValueType>(pair.second);
         std::cout << "Insert: (" << pair.first << ", " << pair.second << ")\n";
         root = SimpleRedBlackHandle::insert(root, keyPtr, valuePtr);
+        auto checkIntact = SimpleRedBlackHandle::debugCheckDefinition(root, true);
+        assert((checkIntact));
         SimpleRedBlackHandle::debugPrintTreeExpr(root);
         std::cout << "\n";
+        std::cout << "Size: " << root->size << "\n";
     }
 
     SimpleRedBlackHandle::debugCheckDefinition(root);
@@ -92,7 +87,7 @@ int main() {
     std::cout << "\n";
     std::cout << "Size: " << (root ? root->size : 0) << "\n";
 
-    for (size_t i = 0; i < testData.size(); ++i) {
+    for (size_t i = 0; i < uniqueKeys.size(); ++i) {
         std::cout << "deleteMin called " << i << " time(s):\n";
         root = SimpleRedBlackHandle::deleteMin(root);
         std::cout << "After deleteMin:\n";
