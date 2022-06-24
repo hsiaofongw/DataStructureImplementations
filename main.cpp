@@ -4,6 +4,7 @@
 #include <map>
 #include <set>
 #include "DataStructures/RedBlackTree.hpp"
+#include "Algorithms/ReverseLinkedList.hpp"
 
 bool verifyTwoNumberListIdentical(const std::vector<uint64_t>& lst1, const std::vector<uint64_t>& lst2) {
     auto lst1Stat = std::unordered_map<uint64_t, size_t> {};
@@ -36,6 +37,10 @@ std::unique_ptr<std::vector<bool>> makeSampleVector(size_t population) {
 }
 
 int main() {
+
+    ReverseLinkedList::test();
+
+    return 0;
 
     auto testKeyValuePairs = std::vector<std::pair<std::string, uint64_t>> {
             { "S", 0 },

@@ -637,38 +637,52 @@ private:
         }
     }
 
-    /** 交换一个 2-Node 的两个节点的位置 */
-    static void swap2Node(NodePtr root) {
-        if (root && root->left && root->right) {
-            NodePtr tmp = root->left;
-            root->left = root->right;
-            root->right = tmp;
+    /** 获取最小值节点 */
+    static NodePtr min(NodePtr root) {
+        if (root) {
+            if (root->left) {
+                return min(root->left);
+            }
+
+            return root;
+        }
+
+        return nullptr;
+    }
+
+    /** 获取最大值节点 */
+    static NodePtr max(NodePtr root) {
+        if (root) {
+            if (root->right) {
+                return max(root->right);
+            }
+
+            return root;
+        }
+
+        return nullptr;
+    }
+
+    /** 删除 key 最大的节点 */
+    static NodePtr doDeleteMax(NodePtr root) {
+        if (is2Node(root)) {
+            if (root->left) {
+                if (is2Node(root->left)) {
+                    if (is2Node(root->right)) {
+
+                    }
+                }
+            } else {
+                return nullptr;
+            }
+        } else if (is3Node(root)) {
+
+        } else {
+            return root;
         }
     }
 
-    /** Delete root in a 2-Node where left child is a 3-Node */
-    static NodePtr deleteRootInA2NodeWhereLeftChildIsA3Node(NodePtr root) {
-        NodePtr newRoot = root->left;
-        LinkType originColor = root->color;
-        newRoot->left->color = LinkType::BLACK;
-        newRoot->right = root->right;
-        updateSize(newRoot);
-        newRoot->color = originColor;
-        return newRoot;
-    }
 
-    /** Delete root in a 2-Node where right child is a 3-Node */
-    static NodePtr deleteRootInA2NodeWhereRightChildIsA3Node(NodePtr root) {
-        NodePtr newRoot = root->right->left;
-        LinkType originColor = root->color;
-        root->right->left = newRoot->left;
-        newRoot->left = root->left;
-        root->right->right = newRoot->right;
-        newRoot->right = root->right;
-        newRoot->color = originColor;
-        updateSize(newRoot);
-        return newRoot;
-    }
 
     /** 删除给定 key 对应的节点，从而让相应的键值对被删除掉 */
     static NodePtr doDeleteNodeByKey(NodePtr root, const KeyT& key) {
@@ -765,7 +779,20 @@ private:
     }
 
     static NodePtr doDeleteNodeByKeyRecursive(NodePtr root, const KeyT& key) {
-        return nullptr;
+        if (is3Node(root)) {
+            NodePtr child1 = root->left->left;
+            NodePtr child2 = root->left->right;
+            NodePtr child3 = root->right;
+
+        } else if (is4Node(root)) {
+
+        } else {
+            if (key == *root->key) {
+                return nullptr;
+            } else {
+                return root;
+            }
+        }
     }
 };
 

@@ -3,4 +3,4 @@ project(DataStructureImplementations)
 
 set(CMAKE_CXX_STANDARD 23)
 
-add_executable(entry main.cpp DataStructures/Heap.hpp DataStructures/BinarySearchTree.hpp DataStructures/RedBlackTree.hpp)
+add_executable(entry main.cpp DataStructures/Heap.hpp DataStructures/BinarySearchTree.hpp DataStructures/RedBlackTree.hpp Algorithms/ReverseLinkedList.hpp)
