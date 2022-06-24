@@ -38,7 +38,7 @@ std::unique_ptr<std::vector<bool>> makeSampleVector(size_t population) {
 
 int main() {
 
-    ReverseLinkedList::test();
+    ::Algorithm::ReverseLinkedList::test();
 
     return 0;
 
