@@ -1,4 +1,4 @@
-# 数据结构实现演示
+# 数据结构与算法实现演示
 
 ## 优先队列
 
@@ -25,3 +25,9 @@
 
 在文件 `DataStructures/BinarySearchTree.hpp`，`BST::BSTHandle` 类定义并实现了一些有关于 BinarySearchTree 数据结构的操作。
 
+## 其他算法文件描述
+
+- `Algorithms/IntersectionOfTwoLinkedList.hpp` 求两个链表的首个交点；
+- `Algorithms/LongestPalindromeSubString.hpp` 求给定字符串的首个最长回文子串；
+- `Algorithms/ReverseLinkedList.hpp` 求给定链表的反转
+- `Algorithms/AddStringFormBinary.hpp` 求给定的以字符串形式提供的二进制整数的整数加法结果的二进制表示的字符串形式；

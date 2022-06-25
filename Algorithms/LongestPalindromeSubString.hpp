@@ -6,10 +6,19 @@
 #define DATASTRUCTUREIMPLEMENTATIONS_LONGESTPALINDROMESUBSTRING_HPP
 
 #include <string>
+#include <vector>
+#include <iostream>
 
 namespace Algorithm {
     namespace LongestPalindromeSubString {
         using std::string;
+
+        std::vector<string> getTestCases() {
+            return std::vector<std::string> {
+                    "babad", "cbbd", "abccbc", "aeiou", "aacabdkacaa"
+            };
+        }
+
         class Solution {
         public:
             static string longestPalindrome(string s) {
