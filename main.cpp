@@ -38,14 +38,6 @@ std::unique_ptr<std::vector<bool>> makeSampleVector(size_t population) {
 }
 
 int main() {
-
-    for (const auto& testCase : ::Algorithm::LongestPalindromeSubString::getTestCases()) {
-        auto result = ::Algorithm::LongestPalindromeSubString::Solution::longestPalindrome(testCase);
-        std::cout << "LPS for " << testCase << " is: " << result << "\n";
-    }
-
-    return 0;
-
     auto testKeyValuePairs = std::vector<std::pair<std::string, uint64_t>> {
             { "S", 0 },
             { "E", 1 },
