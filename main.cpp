@@ -5,6 +5,7 @@
 #include <set>
 #include "DataStructures/RedBlackTree.hpp"
 #include "Algorithms/ReverseLinkedList.hpp"
+#include "Algorithms/LongestPalindromeSubString.hpp"
 
 bool verifyTwoNumberListIdentical(const std::vector<uint64_t>& lst1, const std::vector<uint64_t>& lst2) {
     auto lst1Stat = std::unordered_map<uint64_t, size_t> {};
@@ -38,7 +39,14 @@ std::unique_ptr<std::vector<bool>> makeSampleVector(size_t population) {
 
 int main() {
 
-    ::Algorithm::ReverseLinkedList::test();
+    std::vector<std::string> testCases = {
+            "babad", "cbbd", "abccbc", "aeiou", "aacabdkacaa"
+    };
+
+    for (const auto& testCase : testCases) {
+        auto result = ::Algorithm::LongestPalindromeSubString::Solution::longestPalindrome(testCase);
+        std::cout << "LPS for " << testCase << " is: " << result << "\n";
+    }
 
     return 0;
 
