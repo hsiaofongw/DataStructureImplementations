@@ -482,7 +482,7 @@ private:
      *   / \
      *  A  C D
      *
-     * 注意不要将该函数简单地等同于左旋操作函数。
+     * 注意不要将该函数简单地等同于右旋操作函数。
      *
      */
     static NodePtr moveSiblingFromLeft(NodePtr root) {
