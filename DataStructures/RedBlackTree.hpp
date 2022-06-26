@@ -354,7 +354,7 @@ private:
         }
     }
 
-    /** 从左到右旋转，右旋 */
+    /** 从左到右旋转，右旋，完事后得到的新的 root 是指右的，也就是说它的右儿子的颜色为 RED. */
     static NodePtr rotateRight(NodePtr root) {
         assert((root->left));
 
@@ -369,7 +369,7 @@ private:
         return result;
     }
 
-    /** 从右到左旋转，左旋 */
+    /** 从右到左旋转，左旋，完事后得到的新的 root 是指左的，也就是说它的左儿子的颜色为 RED. */
     static NodePtr rotateLeft(NodePtr root) {
         assert((root->right));
 
@@ -528,7 +528,7 @@ private:
         return root;
     }
 
-    /** 判定是否是 2-Node */
+    /** 判定一个 NodePtr 是否指向一个 2-Node */
     static bool is2Node(NodePtr root) {
         if (root) {
             if ((!isRed(root->left)) && (!isRed(root->right))) {
@@ -539,7 +539,7 @@ private:
         return false;
     }
 
-    /** 判定是否是 3-Node */
+    /** 判定一个 NodePtr 是否指向一个 3-Node */
     static bool is3Node(NodePtr root) {
         if (root && isRed(root->left) && (!isRed(root->right))) {
             return true;
@@ -548,7 +548,7 @@ private:
         return false;
     }
 
-    /** 判定是否是 4-Node */
+    /** 判定一个 NodePtr 是否指向一个 4-Node */
     static bool is4Node(NodePtr root) {
         if (root && isRed(root->left) && isRed(root->right)) {
             return true;
@@ -643,7 +643,7 @@ private:
         }
     }
 
-    /** 获取最小值节点 */
+    /** 获取指向最小值节点的指针 */
     static NodePtr min(NodePtr root) {
         if (root) {
             if (root->left) {
@@ -656,7 +656,7 @@ private:
         return nullptr;
     }
 
-    /** 获取最大值节点 */
+    /** 获取指向最大值节点的指针 */
     static NodePtr max(NodePtr root) {
         if (root) {
             if (root->right) {
@@ -744,6 +744,7 @@ private:
         return root;
     }
 
+    /** 将红链接向上传递，使得该函数最后从根部退出时，红黑树的性质得以保持。 */
     static NodePtr reAdjustLinkColor(NodePtr root) {
         if (isRed(root->left) && isRed(root->left->left)) {
             root = rotateRight(root);
@@ -760,6 +761,7 @@ private:
         return root;
     }
 
+    /** 将 rhs 指向的节点的 key 和 value 同步到 lhs 指向的 */
     static void assignNodeValue(NodePtr lhs, NodePtr rhs) {
         if (lhs) {
             if (rhs) {
@@ -772,8 +774,12 @@ private:
         assert((false));
     }
 
-    static NodePtr delete2NodeSelf(NodePtr root) {
-        assert((is2Node(root)));
+    /**
+     * 假定 root 指向一个 2-Node, 3-Node 或者 4-Node, 再假定它们的儿子都不为 null.
+     * 该函数删除 root 指向的那个节点本身，具体是通过在 root 的左分支或者右分支找到接替者 repl,
+     * 用 repl 的 key 和 value 覆盖 root 的 key 和 value, 然后把这个 repl 删除。
+     */
+    static NodePtr deleteNodeSelf(NodePtr root) {
         if (is2Node(root)) {
             if (is2Node(root->left) && is2Node(root->right)) {
                 merge2Nodes(root);
@@ -905,13 +911,17 @@ private:
             }
             else {
                 // key == *root->key
-                return delete2NodeSelf(root);
+                return deleteNodeSelf(root);
             }
         } else {
             return root;
         }
     }
 
+    /**
+     * 设 root 指向一个 2-Node, 3-Node 或者 4-Node, 再假定它们的儿子都为 null.
+     * 该函数删除 root 以及与 root 同层的节点中，其 key 与传入的参数 key *恰恰相等*的那个节点。
+     */
     static NodePtr deleteBottomNode(NodePtr root, const KeyT& key) {
         // for security
         assert(((is3Node(root) || is4Node(root))));
@@ -960,6 +970,13 @@ private:
         }
     }
 
+    /**
+     * 设 root 指向一个 2-Node.
+     * 该函数根据传入的 key 与 root 所指节点的 key 的相对大小关系来决定是否应该：
+     * (1) 删除该 2-Node 节点本身；
+     * (2) 在左分支继续寻找要被删除的节点并在找到后删除之；
+     * (3) 在右分支继续寻找要被删除的节点并在找到后删除之；
+     */
     static NodePtr deleteFromChildOf2Node(NodePtr root, const KeyT& key) {
         if (is2Node(root->left) && is2Node(root->right)) {
             merge2Nodes(root);
@@ -978,20 +995,21 @@ private:
             return doDeleteNodeByKeyRecursive(root->right, key);
         } else {
             // key == *root->key
-            return delete2NodeSelf(root);
+            return deleteNodeSelf(root);
         }
     }
 
+    /** 沿着搜索路径递归地搜索 key 恰巧等于传入的 key 的节点并在找到后将它删除。 */
     static NodePtr doDeleteNodeByKeyRecursive(NodePtr root, const KeyT& key) {
         assert(((is3Node(root) || is4Node(root))));
         if (root->left) {
             if (is3Node(root)) {
                 if (key == *root->left->key) {
-                    root->left = delete2NodeSelf(root->left);
+                    root->left = deleteNodeSelf(root->left);
                     updateSize(root);
                 } else if (key == *root->key) {
                     root = rotateRight(root);
-                    root->right = delete2NodeSelf(root->right);
+                    root->right = deleteNodeSelf(root->right);
                     updateSize(root);
                     root = rotateLeft(root);
                     updateSize(root);
@@ -1015,7 +1033,7 @@ private:
                 } else if (key > *root->key) {
                     root->right = deleteFromChildOf2Node(root->right);
                 } else {
-                    root = delete2NodeSelf(root);
+                    root = deleteNodeSelf(root);
                     updateSize(root);
                 }
             } else {
