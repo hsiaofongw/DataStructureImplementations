@@ -430,6 +430,7 @@ private:
             if (isBlack(root->left) && isBlack(root->right)) {
                 root->left->color = LinkType::RED;
                 root->right->color = LinkType::RED;
+                root->color = LinkType::BLACK;
             }
         }
     }
@@ -478,17 +479,7 @@ private:
         }
 
         // color 和 size 的更新都是在左、右旋的过程中进行
-        if (root->left && isRed(root->left) && isRed(root->left->left)) {
-            root = rotateRight(root);
-        }
-
-        if ((!isRed(root->left)) && isRed(root->right)) {
-            root = rotateLeft(root);
-        }
-
-        if (isRed(root->left) && isRed(root->right)) {
-            flipColor(root);
-        }
+        root = reAdjustLinkColor(root);
 
         updateSize(root);
 
@@ -600,18 +591,7 @@ private:
             }
 
             // 后续处理
-            if (isRed(root->left) && isRed(root->left->left)) {
-                // 条件 isRed(root->left) 蕴含了 root->left 不为 null
-                root = rotateRight(root);
-            }
-
-            if ((!isRed(root->left)) && isRed(root->right)) {
-                root = rotateLeft(root);
-            }
-
-            if (isRed(root->left) && isRed(root->right)) {
-                flipColor(root);
-            }
+            root = reAdjustLinkColor(root);
 
             updateSize(root);
 
@@ -650,47 +630,189 @@ private:
     /** 删除 key 最大的节点 */
     static NodePtr doDeleteMax(NodePtr root) {
         if (is2Node(root)) {
-            if (root->left) {
-                if (is2Node(root->left)) {
-                    if (is2Node(root->right)) {
-
-                    }
+            if (is2Node(root->right)) {
+                if (is3Node(root->left)) {
+                    root = moveSiblingFromLeft(root);
+                    return doDeleteMaxRecursive(root->right);
+                } else if (is2Node(root->left)) {
+                    merge2Nodes(root);
+                    return doDeleteMaxRecursive(root);
+                } else {
+                    assert((false));
                 }
+            } else if (is3Node(root->right)) {
+                return doDeleteMaxRecursive(root->right);
             } else {
                 return nullptr;
             }
         } else if (is3Node(root)) {
-
+            return doDeleteMaxRecursive(root);
         } else {
             return root;
         }
     }
+    static NodePtr doDeleteMaxRecursive(NodePtr root) {
+        bool is3NodeOr4Node = is3Node(root) || is4Node(root);
+        assert((is3NodeOr4Node));
+
+        if (is3Node(root)) {
+            if (is2Node(root->right)) {
+                if (is3Node(root->left)) {
+                    root = moveSiblingFromLeft(root);
+                    root->right = doDeleteMaxRecursive(root->right);
+                } else if (is2Node(root->left)) {
+                    merge2Nodes(root);
+                    root = doDeleteMaxRecursive(root);
+                } else {
+                    assert((false));
+                }
+            } else if (is3Node(root->right)) {
+                root->right = doDeleteMaxRecursive(root->right);
+            } else {
+                return root->left;
+            }
+        } else if (is4Node(root)) {
+            if (is2Node(root->right->right)) {
+                if (is3Node(root->right->left)) {
+                    root->right = moveSiblingFromLeft(root->right);
+                    root->right->right = doDeleteMaxRecursive(root->right->right);
+                    updateSize(root->right);
+                    updateSize(root);
+                } else if (is2Node(root->right->left)) {
+                    merge2Nodes(root->right);
+                    root->right = doDeleteMaxRecursive(root->right);
+                    updateSize(root);
+                } else {
+                    assert((false));
+                }
+            } else if (is3Node(root->right->right)) {
+                root->right->right = doDeleteMaxRecursive(root->right->right);
+                updateSize(root->right);
+                updateSize(root);
+            } else {
+                root->right = nullptr;
+                updateSize(root);
+                return root;
+            }
+        } else {
+            assert((false));
+        }
+
+        root = reAdjustLinkColor(root);
+        return root;
+    }
+
+    static NodePtr reAdjustLinkColor(NodePtr root) {
+        if (isRed(root->left) && isRed(root->left->left)) {
+            root = rotateRight(root);
+        }
+
+        if ((!isRed(root->left)) && isRed(root->right)) {
+            root = rotateLeft(root);
+        }
+
+        if (isRed(root->left) && isRed(root->right)) {
+            flipColor(root);
+        }
+
+        return root;
+    }
+
+    static void assignNodeValue(NodePtr lhs, NodePtr rhs) {
+        if (lhs) {
+            if (rhs) {
+                lhs->key = rhs->key;
+                lhs->value = rhs->value;
+                return;
+            }
+        }
+
+        assert((false));
+    }
 
     static NodePtr delete2NodeSelf(NodePtr root) {
         assert((is2Node(root)));
-
-        if (is3Node(root->right)) {
-            NodePtr minNodeInRHS = min(root->right);
-            root->key = minNodeInRHS->key;
-            root->value = minNodeInRHS->value;
-            root->right = doDeleteMin(root->right);
-            updateSize(root);
-            return root;
-        } else if (is2Node(root->right)) {
-            if (is3Node(root->left)) {
-                root = moveSiblingFromLeft(root);
+        if (is2Node(root)) {
+            if (is2Node(root->left) && is2Node(root->right)) {
+                merge2Nodes(root);
+                return doDeleteNodeByKeyRecursive(root, root->key);
+            } else if (is3Node(root->left)) {
+                NodePtr maxNodeInLHS = max(root->left);
+                root->left = doDeleteMax(root->left);
+                updateSize(root);
+                root->key = maxNodeInLHS->key;
+                root->value = maxNodeInLHS->value;
+                return root;
+            } else if (is3Node(root->right)) {
+                NodePtr minNodeInRHS = min(root->right);
                 root->right = doDeleteMin(root->right);
                 updateSize(root);
+                root->key = minNodeInRHS->key;
+                root->value = minNodeInRHS->value;
+            } else {
+                return nullptr;
+            }
+        } else if (is3Node(root)) {
+            if (is3Node(root->right)) {
+                // 可以直接从 root->right 提取 replacement
+                NodePtr repl = min(root->right);
+                root->right = doDeleteMin(root->right);
+                updateSize(root);
+                assignNodeValue(root, repl);
                 return root;
             } else {
-                // root->left must be 2-Node
-                // so, we can infer that both root->left and root->right is 2-Node
-                // so, we can merge them
-                merge2Nodes(root);
-                return doDeleteNodeByKeyRecursive(root, *root->key);
+                // 现在，尝试从 root->left 寻找 replacement, 主要是找 max
+                if (is2Node(root->left->right)) {
+                    if (is2Node(root->left->left)) {
+                        merge2Nodes(root->left);
+                        NodePtr repl = max(root->left);
+                        root->left = doDeleteMax(root->left);
+                        assignNodeValue(root, repl);
+                        updateSize(root);
+                        return root;
+                    } else if (is3Node(root->left->left)) {
+                        root->left = moveSiblingFromLeft(root->left); // 从 root->left->left 往 root->left->right 移一个
+                        NodePtr repl = max(root->left->right);
+                        root->left->right = doDeleteMax(root->left->right);
+                        assignNodeValue(root, repl);
+                        updateSize(root);
+                        return root;
+                    } else {
+                        assert((false));
+                    }
+                } else if (is3Node(root->left->right)) {
+                    NodePtr repl = max(root->left->right);
+                    root->left->right = doDeleteMax(root->left->right);
+                    assignNodeValue(root, repl);
+                    updateSize(root);
+                    return root;
+                } else {
+                    assert((false));
+                }
+            }
+        } else if (is4Node(root)) {
+            // 仅仅考虑从 root->right 提取 replacement, 也就是找到 root->right 的 min, 然后 deleteMin
+            if (is2Node(root->right->left)) {
+                if (is2Node(root->right->right)) {
+                    merge2Nodes(root->right);
+                    NodePtr repl = min(root->right);
+                    root->right = doDeleteMin(root->right);
+                    updateSize(root);
+                    assignNodeValue(root, repl);
+                    return root;
+                } else if (is3Node(root->right->right)) {
+                    root->right = moveSiblingFromRight(root->right); // 从 root->right->right 借调一个到 root->right->left
+                    NodePtr repl = min(root->right);
+                    root->right->left = doDeleteMin(root->right->left);
+                    updateSize(root->right);
+                    updateSize(root);
+                    assignNodeValue(root, repl);
+                    return root;
+                } else {
+                    assert((false));
+                }
             }
         } else {
-            // root->right is null, by the balance property of Red-Black BST, root-left is also null
             return nullptr;
         }
     }
@@ -748,9 +870,123 @@ private:
         }
     }
 
-    static NodePtr doDeleteNodeByKeyRecursive(NodePtr root, const KeyT& key) {
-        assert(((is2Node(root) || is3Node(root))));
+    static NodePtr deleteBottomNode(NodePtr root, const KeyT& key) {
+        // for security
+        assert(((is3Node(root) || is4Node(root))));
 
+        if (is4Node(root)) {
+            if (key == *root->left->key) {
+                root->left = nullptr;
+                root = rotateLeft(root);
+                return root;
+            }
+
+            if (key == *root->key) {
+                NodePtr newRoot = root->right;
+                newRoot->left = root->left;
+                newRoot->left->color = LinkType::RED;
+                newRoot->color = root->color;
+                updateSize(newRoot);
+
+                return newRoot;
+            }
+
+            if (key == *root->right->key) {
+                root->right = nullptr;
+                return root;
+            }
+
+            // delete nothing
+            return root;
+        }
+
+        if (is3Node(root)) {
+            if (key == *root->key) {
+                NodePtr newRoot = root->left;
+                newRoot->color = root->color;
+                return newRoot;
+            }
+
+            if (key == *root->left->key) {
+                root->left = nullptr;
+                updateSize(root);
+                return root;
+            }
+
+            // delete nothing
+            return root;
+        }
+    }
+
+    static NodePtr deleteFromChildOf2Node(NodePtr root, const KeyT& key) {
+        if (is2Node(root->left) && is2Node(root->right)) {
+            merge2Nodes(root);
+            return doDeleteNodeByKeyRecursive(root, key);
+        }
+
+        if (key < *root->key) {
+            if (is2Node(root->left)) {
+                root = moveSiblingFromRight(root);
+            }
+            return doDeleteNodeByKeyRecursive(root->left, key);
+        } else if (key > *root->key) {
+            if (is2Node(root->right)) {
+                root = moveSiblingFromLeft(root);
+            }
+            return doDeleteNodeByKeyRecursive(root->right, key);
+        } else {
+            // key == *root->key
+            return delete2NodeSelf(root);
+        }
+    }
+
+    static NodePtr doDeleteNodeByKeyRecursive(NodePtr root, const KeyT& key) {
+        assert(((is3Node(root) || is4Node(root))));
+        if (root->left) {
+            if (is3Node(root)) {
+                if (key == *root->left->key) {
+                    root->left = delete2NodeSelf(root->left);
+                    updateSize(root);
+                } else if (key == *root->key) {
+                    root = rotateRight(root);
+                    root->right = delete2NodeSelf(root->right);
+                    updateSize(root);
+                    root = rotateLeft(root);
+                    updateSize(root);
+                } else if (key < *root->left->key || (key > *root->left->key && key < *root->key)) {
+                    root->left = deleteFromChildOf2Node(root->left);
+                    updateSize(root);
+                } else if (key > *root->key) {
+                    // search child 3, i.e. root->right
+                    root = rotateRight(root);
+                    root->right = deleteFromChildOf2Node(root->right);
+                    updateSize(root);
+                    root = rotateLeft(root);
+                } else {
+                    assert((false));
+                }
+            }
+            else if (is4Node(root)) {
+                if (key < *root->key) {
+                    root->left = deleteFromChildOf2Node(root->left);
+                    updateSize(root);
+                } else if (key > *root->key) {
+                    root->right = deleteFromChildOf2Node(root->right);
+                } else {
+                    root = delete2NodeSelf(root);
+                    updateSize(root);
+                }
+            } else {
+                assert((false));
+            }
+
+            root = reAdjustLinkColor(root);
+
+            return root;
+        } else {
+            // Reached bottom
+            return deleteBottomNode(root, key);
+        }
     }
 };
 
