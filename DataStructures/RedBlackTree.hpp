@@ -436,8 +436,22 @@ private:
     }
 
     /**
-     * 2(2, 3) => 2(3, 2), 2(2, 4) => 2(3, 3)
-     * b(a, cd) => c(ab, d), b(a, cde) => c(ab, de)
+     * 设 root 指向一个 2-Node, 该 2-Node 的左儿子是一个 2-Node,
+     * 右儿子是一个 3-Node, 设 root 的 key 是 B, 左儿子的 key 是 A,
+     * 右儿子的 key 是 C, D.
+     *
+     *      B
+     *    /  \
+     *   A  C D
+     *
+     * 那么该函数返回一个指针指向这样的 2-Node:
+     *
+     *    C
+     *   / \
+     * A B  D
+     *
+     * 注意不要将该函数简单地等同于左旋操作函数。
+     *
      */
     static NodePtr moveSiblingFromRight(NodePtr root) {
         if (root && root->left && root->right && isRed(root->right->left)) {
@@ -453,6 +467,24 @@ private:
         assert((false));
     }
 
+    /**
+     * 设 root 指向一个 2-Node, 该 2-Node 的左儿子是一个 3-Node,
+     * 右儿子是一个 2-Node, 设 root 的 key 是 C, 左儿子的 key 是 A B,
+     * 右儿子的 key 是 D.
+     *
+     *      C
+     *     / \
+     *  A B  D
+     *
+     * 那么该函数返回一个指针指向这样的 2-Node:
+     *
+     *    B
+     *   / \
+     *  A  C D
+     *
+     * 注意不要将该函数简单地等同于左旋操作函数。
+     *
+     */
     static NodePtr moveSiblingFromLeft(NodePtr root) {
         if (root && root->left && isRed(root->left->left) && root->right) {
             NodePtr newRoot = rotateRight(root);
