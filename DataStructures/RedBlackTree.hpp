@@ -12,6 +12,7 @@
 #include <vector>
 #include <functional>
 #include <algorithm>
+#include <utility>
 
 /** 表颜色 */
 enum class LinkType {
@@ -56,11 +57,44 @@ public:
         return 0;
     }
 
-    /** 插入操作 */
+    /**
+     * 插入操作，注意不要用原来的指针，返回的新指针才是指向插入（或者更新）了传入的键值对的树的指针。
+     * 例如你可以传入一个 nullptr 作为 root 的实参（这代表一个空树或者说指向空树的指针），
+     * 但是该函数会在插入操作成功后返回一个指向非空树的指针，那又是另一个指针了。
+     */
     static NodePtr insert(NodePtr root, const KeyPtr& k, const ValuePtr& v) {
         NodePtr result = doInsert(root, k, v);
         result->color = LinkType::BLACK;
         return result;
+    }
+
+    /** 搜索操作，返回相应的节点指针，如果没有满足的，返回空指针。 */
+    static NodePtr searchNodeByKey(NodePtr root, const KeyT& key) {
+        NodePtr head = root;
+        while (head) {
+            if (key < *head->key) {
+                head = head->right;
+            } else if (key < *head->key) {
+                head = head->left;
+            } else {
+                return head;
+            }
+        }
+
+        return nullptr;
+    }
+
+    /**
+     * 搜索操作，返回相应的键值对（键和值都是指针形式，键值对对象本身以 std::pair 模板实例的对象形式体现），
+     * 假如说没有找到，键值对里的值部分会是一个空指针，正常情况下（找到里），键值对的值会是一个指向值的非空的共享指针。
+     */
+    static std::pair<KeyPtr, ValuePtr> searchKeyValuePairByKey(NodePtr root, const KeyT& key) {
+        NodePtr result = searchNodeByKey(root, key);
+        if (result) {
+            return std::pair<KeyPtr, ValuePtr> { result->key, result->value };
+        }
+
+        return std::pair<KeyPtr, ValuePtr> { nullptr, nullptr };
     }
 
     /** 打印 Key 表达式 */
@@ -788,15 +822,13 @@ private:
                 NodePtr maxNodeInLHS = max(root->left);
                 root->left = doDeleteMax(root->left);
                 updateSize(root);
-                root->key = maxNodeInLHS->key;
-                root->value = maxNodeInLHS->value;
+                assignNodeValue(root, maxNodeInLHS);
                 return root;
             } else if (is3Node(root->right)) {
                 NodePtr minNodeInRHS = min(root->right);
                 root->right = doDeleteMin(root->right);
                 updateSize(root);
-                root->key = minNodeInRHS->key;
-                root->value = minNodeInRHS->value;
+                assignNodeValue(root, minNodeInRHS);
             } else {
                 return nullptr;
             }
