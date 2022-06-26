@@ -424,6 +424,16 @@ private:
     /**
      * 设 root 是一个 2-node 的指针，该 2-node 的左右 child 都是 2-node,
      * 那么此函数就把这 3 个 2-node 合并成一个 4-node, 然后返回一个指向这个 4-node 的指针。
+     *
+     *          root                newRoot
+     *         /                    /
+     *        B               A -- B -- C
+     *      /  \      ==>    / \       / \
+     *     /    \           1  2      3  4
+     *    A      C
+     *   / \    / \
+     *  1   2  3   4
+     *
      */
     static void merge2Nodes(NodePtr root) {
         if (root) {
