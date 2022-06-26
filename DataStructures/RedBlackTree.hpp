@@ -72,7 +72,7 @@ public:
     static NodePtr searchNodeByKey(NodePtr root, const KeyT& key) {
         NodePtr head = root;
         while (head) {
-            if (key < *head->key) {
+            if (key > *head->key) {
                 head = head->right;
             } else if (key < *head->key) {
                 head = head->left;
