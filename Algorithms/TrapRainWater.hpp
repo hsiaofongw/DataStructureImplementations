@@ -111,7 +111,7 @@ namespace Algorithm {
                 // 也能够计算出每一个 max(height[i..N]), 如果在这之前我们就算出了 i_m,
                 // 那么我们就不需要任何空间来存储这些 max(height[0..i]) 以及 max(height[i..N]) 的值了。
 
-                size_t s = height.size();
+                const size_t s = height.size();
                 int rains = 0;
                 if (s <= 2) {
                     return rains;
