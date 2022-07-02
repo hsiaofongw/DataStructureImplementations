@@ -41,7 +41,19 @@ namespace Algorithm {
                 return dfaPtr;
             }
             DFATable &dfa = *dfaPtr;
+
+            // When at initial state (a.k.a. state 0),
+            // if it got a pattern[0], then it moves to state 1
             dfa[0][pattern[0]] = 1;
+
+            // So, in DFA table, row index represent where we already are,
+            // more specifically,
+            // i in dfa[i][c] means "We are in such a situation that seeking pattern[i]".
+            // c in dfa[i][c] is a char, let y = dfa[i][c]
+            // these means:
+            // "As we are in a situation that looks for pattern[i],
+            // when we got a char like c, we would move to state y."
+
             for (size_t colIdx = 1, prevState = 0; colIdx < M; ++colIdx) {
                 for (const auto &patternChar : patternChars) {
                     dfa[colIdx][patternChar] = dfa[prevState][patternChar];
