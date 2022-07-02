@@ -112,14 +112,39 @@ namespace Algorithm {
                 // 那么我们就不需要任何空间来存储这些 max(height[0..i]) 以及 max(height[i..N]) 的值了。
 
                 size_t s = height.size();
+                int rains = 0;
                 if (std::empty(height) || s <= 2) {
-                    return 0;
+                    return rains;
                 }
 
+                // 求上面说的那个 i_m
+                size_t maxIdx = 0;
+                for (size_t idx = 0; idx < s; ++idx) {
+                    if (height[idx] > height[maxIdx]) {
+                        maxIdx = idx;
+                    }
+                }
 
+                // 从左往右遍历
+                int leftMax = height[0];
+                for (size_t idx = 1; idx <= maxIdx; ++idx) {
+                    rains += std::max(0, std::min(leftMax, height[maxIdx]) - height[idx]);
+                    if (height[idx] > leftMax) {
+                        leftMax = height[idx];
+                    }
+                }
 
+                // 从右往左遍历
+                int rightMax = height[s-1];
+                for (size_t offset = 0, idx; s-1-offset > maxIdx; ++offset) {
+                    idx = s-1-offset;
+                    rains += std::max(0, std::min(height[maxIdx], rightMax) - height[idx]);
+                    if (height[idx] > rightMax) {
+                        rightMax = height[idx];
+                    }
+                }
 
-                return 0;
+                return rains;
             }
         };
     }
