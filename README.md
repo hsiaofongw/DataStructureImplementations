@@ -34,4 +34,5 @@ File `DataStructures/BinarySearchTree.hpp` defined some operations on BST.
 - `Algorithms/IntersectionOfTwoLinkedList.hpp` 求两个链表的首个交点；Get first intersection point of two linked-list;
 - `Algorithms/LongestPalindromeSubString.hpp` 求给定字符串的首个最长回文子串；Get first longest palindromic substring of given string;
 - `Algorithms/ReverseLinkedList.hpp` 求给定链表的反转；Get the reverse of given linked-list;
-- `Algorithms/AddStringFormBinary.hpp` 求给定的以字符串形式提供的二进制整数的整数加法结果的二进制表示的字符串形式；Get the string form of binary addition result in binary form of two binary form integer provided in string form; 
+- `Algorithms/AddStringFormBinary.hpp` 求给定的以字符串形式提供的二进制整数的整数加法结果的二进制表示的字符串形式；Get the string form of binary addition result in binary form of two binary form integer provided in string form;
+- `Algorithms/TrapRainWater.hpp` 求「接雨水」问题的解，以及在代码注释中给出了关键数学公示和求解思路；Get the solution of the Trap Rain Water problem, and there are explanations in the comments in the code;
