@@ -100,27 +100,22 @@ namespace Algorithm {
                 // 并且将这些值存储在向量中，这样做，会导致程序需要 O(n) 的额外空间。
                 //
                 // 现在，我们希望挑战一下：把这 O(n) 的额外空间也去掉，让程序只用 O(1) 的额外空间就可以完成计算。
+                //
+                // 接下来我们要作出的改进是基于这样的事实：
+                //
+                // 设 i_m 是向量 height 的最大值的下标，并且如果 height 有多个最大值，那么 i_m 是这些最大值的下标中最小的那一个。
+                // 那么，对于 i_m 以及所有 i_m 左边的下标 0 <= i <= i_m, max(height[i..N]) == height[i_m] 恒成立。
+                // 并且，对于 i_m 以及所有 i_m 右边的下标 i_m <= i <= N-1, max(height[0..i+1]) == height[i_m] 也是恒成立。
+                //
+                // 我们在从最左边遍历到 i_m 的过程中就能够算出每一个 max(height[0..i]), 同样在从最右边遍历到 i_m 的过程中，
+                // 也能够计算出每一个 max(height[i..N]), 如果在这之前我们就算出了 i_m,
+                // 那么我们就不需要任何空间来存储这些 max(height[0..i]) 以及 max(height[i..N]) 的值了。
 
-                if (std::empty(height)) {
+                size_t s = height.size();
+                if (std::empty(height) || s <= 2) {
                     return 0;
                 }
 
-                size_t s = height.size();
-                size_t maxIdx = s-1;
-                for (size_t offset = 0; offset < height.size(); ++offset) {
-                    size_t idx = height.size() - 1 - offset;
-                    if (height[idx] > height[maxIdx]) {
-                        maxIdx = idx;
-                    }
-                }
-
-                // Ok, 到了这儿，咱们的话就是说相当于说已经出了两个东西：
-                // (1) maxIdx 全局最大值的下标值（因为向量 height 非空，所以这个总是存在的）
-                // (2) rightMaxHeights
-                // 对于 (2), 定义 rightMaxHeights[i] = maxHeight(i, N-1),
-                // 其中：N 是向量 height 的长度，i 是向量 height 的非越界下标。
-                // 解释一下：设 i, j 都是向量 v 的非越界下标，且 i <= j, 那么向量 v 的 maxHeight(i, j) 定义为
-                // 子数组 [v[i], v[i+1], ..., v[j]] 的最大值，若这样的最大值有多个，则取下标最小的那个。
 
 
 
