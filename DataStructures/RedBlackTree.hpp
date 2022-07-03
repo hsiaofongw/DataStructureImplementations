@@ -532,7 +532,6 @@ namespace DataStructure {
                         assert((false));
                     }
 
-                    root = reAdjustLinkColor(root);
                     updateSize(root);
                 }
 
@@ -623,23 +622,26 @@ namespace DataStructure {
                     if (is2Node(root->right)) {
                         if (is3Node(root->left)) {
                             root = moveSiblingFromLeft(root);
-                            return doDeleteMaxRecursive(root->right);
+                            root->right = doDeleteMaxRecursive(root->right);
                         } else if (is2Node(root->left)) {
                             merge2Nodes(root);
-                            return doDeleteMaxRecursive(root);
+                            root = doDeleteMaxRecursive(root);
                         } else {
                             assert((false));
                         }
                     } else if (is3Node(root->right)) {
-                        return doDeleteMaxRecursive(root->right);
+                        root->right = doDeleteMaxRecursive(root->right);
                     } else {
                         return nullptr;
                     }
                 } else if (is3Node(root)) {
-                    return doDeleteMaxRecursive(root);
+                    root = doDeleteMaxRecursive(root);
                 } else {
                     return root;
                 }
+
+                updateSize(root);
+                return root;
             }
             static NodePtr doDeleteMaxRecursive(NodePtr root) {
                 bool is3NodeOr4Node = is3Node(root) || is4Node(root);
