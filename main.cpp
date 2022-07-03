@@ -42,18 +42,6 @@ std::unique_ptr<std::vector<bool>> makeSampleVector(size_t population) {
 
 int main() {
 
-    auto testCases = Algorithm::SubStringSearch::getTestCases();
-    for (const auto &testCase : testCases) {
-        std::cout << "Text: " << testCase.text << "\nPattern: " << testCase.pattern << "\n";
-        auto patternPtr = std::make_shared<std::string>(testCase.pattern);
-        auto kmpTester = Algorithm::SubStringSearch::KMPStringMatcher { patternPtr };
-        kmpTester.debugPrintDFATable();
-        auto result = kmpTester.search(testCase.text);
-        std::cout << "Result: " << result << "\n";
-    }
-
-    return 0;
-
     using namespace DataStructure::RedBlackTree;
 
     auto testKeyValuePairs = std::vector<std::pair<std::string, uint64_t>> {
