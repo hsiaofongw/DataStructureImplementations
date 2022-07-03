@@ -12,18 +12,23 @@
 #include <cctype>
 #include <vector>
 #include <algorithm>
+#include <initializer_list>
+#include <iostream>
 
 namespace Algorithm {
     namespace SubStringSearch {
 
         // Refer to STL templates
         using std::unique_ptr;
+        using std::shared_ptr;
         using std::make_unique;
         using std::string;
         using std::set;
         using std::map;
         using std::vector;
         using std::empty;
+        using std::initializer_list;
+        using std::cout;
 
         // Alias DFATable typename
         using DFATable = vector<map<char8_t, size_t>>;
@@ -64,6 +69,91 @@ namespace Algorithm {
 
             return dfaPtr;
         }
+
+        struct TestCase {
+            TestCase(initializer_list<string> initLst) {
+                auto initLstIt = initLst.begin();
+                this->text = *initLstIt; // 第一个参数用来初始化 this->text
+                ++initLstIt;
+
+                if (initLstIt != initLst.end()) {
+                    this->pattern = *initLstIt; // 第二个参数用来初始化 this->pattern
+                }
+            }
+
+            string text;
+            string pattern;
+        };
+
+        vector<TestCase> getTestCases() {
+            return vector<TestCase> {
+                    { "ababbbbab", "babb" },
+                    { "aaaaabbbabababab", "abbbbb" },
+                    { "aaaaabbbabababab", "aabbb" },
+                    { "AABRAACADABRAACAADABRA", "AACAA" },
+                    { "AABRAACADABRAACAADABRA", "ABABAC" }
+            };
+        }
+
+        class KMPStringMatcher {
+        public:
+
+            /**
+             * 一个 KMPStringMatcher 对象在构造之时就需要知道 Pattern 的具体内容，
+             * 从而依据 Pattern 的内容完成对 DFA 的构建。
+             */
+            explicit KMPStringMatcher(const shared_ptr<string>& _patternPtr) :
+                patternPtr(_patternPtr),
+                dfaPtr(dfaBuilder(*_patternPtr))
+            { }
+
+            /**
+             * 在文本 text: string 中搜索子串 pattern: string,
+             * 若这样的 pattern 子串在 text 中出现了，则返回 pattern 在 text 中的下标，
+             * 若这样的 pattern 子串在 text 中出现了多次，则返回的那个下标指向 pattern 最先出现的那个位置，
+             * 若这样的 pattern 子串在 text 中没有出现过，则返回 text 作为一个 std::basic_string<char> 的长度。
+             */
+            size_t search(const string &text) {
+                const string &pattern = *this->patternPtr;
+                DFATable &dfa = *this->dfaPtr;
+                size_t textLen = text.size(), patternLen = pattern.size();
+                size_t textOffset = 0;
+                for (
+                    size_t patternOffset = 0;
+                    textOffset < textLen && patternOffset < patternLen;
+                    ++textOffset
+                ) {
+                    char8_t inputChar = text[textOffset];
+                    size_t nextState = dfa[patternOffset][inputChar];
+                    patternOffset = nextState;
+
+                    if (patternOffset == patternLen) {
+                        return textOffset-patternLen+1;
+                    }
+                }
+
+                return textLen;
+            }
+
+            /** （调试用）打印 DFA 表项 */
+            void debugPrintDFATable() {
+                DFATable &dfa = *this->dfaPtr;
+                for (size_t rowIdx = 0; rowIdx < dfa.size(); ++rowIdx) {
+                    const auto &row = dfa[rowIdx];
+                    for (const auto &pair : row) {
+                        cout << "("
+                            << rowIdx << ", "
+                            << static_cast<char>(pair.first) << ", "
+                            << pair.second
+                            << ")\n";
+                    }
+                }
+            }
+
+        private:
+            unique_ptr<DFATable> dfaPtr;
+            shared_ptr<string> patternPtr;
+        };
     }
 }
 
