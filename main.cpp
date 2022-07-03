@@ -101,9 +101,6 @@ int main() {
         std::cout << "Size: " << (root ? root->size : 0) << "\n";
         SimpleRedBlackHandle::debugPrintTreeExpr(root);
         std::cout << "\n";
-        if (root->size == 8) {
-            ;
-        }
         auto checkIntact = SimpleRedBlackHandle::debugCheckDefinition(root, true);
         assert((checkIntact));
     }

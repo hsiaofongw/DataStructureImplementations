@@ -415,6 +415,7 @@ namespace DataStructure {
                     NodePtr newRoot = rotateLeft(root);
                     newRoot->left->left->color = LinkType::RED;
                     newRoot->left->color = LinkType::BLACK;
+                    newRoot->right->color = LinkType::BLACK;
 
                     return newRoot;
                 }
