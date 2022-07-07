@@ -9,6 +9,7 @@
 #include "Algorithms/TrapRainWater.hpp"
 #include "Utils/PrintVector.hpp"
 #include "Algorithms/SubStringSearch.hpp"
+#include "Algorithms/NQueens.hpp"
 
 bool verifyTwoNumberListIdentical(const std::vector<uint64_t>& lst1, const std::vector<uint64_t>& lst2) {
     auto lst1Stat = std::unordered_map<uint64_t, size_t> {};
@@ -41,6 +42,21 @@ std::unique_ptr<std::vector<bool>> makeSampleVector(size_t population) {
 }
 
 int main() {
+    for (size_t i = 0; i < 8; ++i) {
+        const size_t problemSizeN = i+1;
+        auto solutions = Algorithm::NQueens::getNQueensSolutions(problemSizeN);
+        if (solutions.empty()) {
+            std::cout << "No solutions for N = " << problemSizeN << ".\n";
+        } else {
+            std::cout << "Solutions for N = " << problemSizeN << ":\n";
+            for (const auto &solution : solutions) {
+                auto solutionView = Algorithm::NQueens::solutionToString(solution, problemSizeN);
+                std::cout << solutionView << "\n";
+            }
+        }
+    }
+
+    return 0;
 
     using namespace DataStructure::RedBlackTree;
 
