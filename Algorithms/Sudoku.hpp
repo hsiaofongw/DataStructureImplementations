@@ -113,6 +113,11 @@ namespace Algorithm {
             return true;
         }
     }
+
+    /** 数独求解 */
+    namespace SudokuSolve {
+
+    }
 }
 
 #endif //DATASTRUCTUREIMPLEMENTATIONS_SUDOKU_HPP
