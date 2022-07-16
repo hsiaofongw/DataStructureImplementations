@@ -12,6 +12,7 @@
 #include "Algorithms/NQueens.hpp"
 #include "Algorithms/MaximumRectangle.hpp"
 #include "Algorithms/SpiralMatrix.hpp"
+#include "Algorithms/LongestConsecutiveSequence.hpp"
 
 bool verifyTwoNumberListIdentical(const std::vector<uint64_t>& lst1, const std::vector<uint64_t>& lst2) {
     auto lst1Stat = std::unordered_map<uint64_t, size_t> {};
@@ -44,21 +45,16 @@ std::unique_ptr<std::vector<bool>> makeSampleVector(size_t population) {
 }
 
 int main() {
-    std::vector<std::pair<std::vector<std::vector<int>>, std::vector<int>>> testCases = {
-            { {{1,2,3},{4,5,6},{7,8,9}}, {1,2,3,6,9,8,7,4,5} },
-            { {{1,2,3,4},{5,6,7,8},{9,10,11,12}}, {1,2,3,4,8,12,11,10,9,5,6,7} },
-            { {{1,2},{3,4}}, {1,2,4,3} },
-            { {{1}}, { 1 } },
-            { {{1,2,3}}, {1,2,3} },
-            {{{1},{2},{3}}, {1,2,3}}
-    };
+    {
+        using Algorithm::LongestConsecutiveSequence::getTestCases;
+        using Algorithm::LongestConsecutiveSequence::Solution;
 
-    auto solution = Algorithm::SpiralMatrix::Solution {};
-
-    for (const auto &testCase : testCases) {
-        auto result = solution.spiralOrder(testCase.first);
-        auto expectedResult = testCase.second;
-        assert((expectedResult == result));
+        auto testCases = getTestCases();
+        for (const auto &testCase : testCases) {
+            int expected = testCase.second;
+            int result = Solution::longestConsecutive(testCase.first);
+            assert((expected == result));
+        }
     }
 
     return 0;
