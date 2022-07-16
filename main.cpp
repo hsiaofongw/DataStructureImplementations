@@ -13,6 +13,7 @@
 #include "Algorithms/MaximumRectangle.hpp"
 #include "Algorithms/SpiralMatrix.hpp"
 #include "Algorithms/LongestConsecutiveSequence.hpp"
+#include "Algorithms/MergeIntervals.hpp"
 
 bool verifyTwoNumberListIdentical(const std::vector<uint64_t>& lst1, const std::vector<uint64_t>& lst2) {
     auto lst1Stat = std::unordered_map<uint64_t, size_t> {};
@@ -45,6 +46,22 @@ std::unique_ptr<std::vector<bool>> makeSampleVector(size_t population) {
 }
 
 int main() {
+    {
+        using Algorithm::MergeIntervals::getTestCases;
+        using Algorithm::MergeIntervals::Solution;
+
+        Solution solution;
+        auto testCases = getTestCases();
+        for (auto &testCase : testCases) {
+            const auto &expected = testCase.second;
+            auto result = solution.merge(testCase.first);
+            assert((result == expected));
+        }
+    }
+
+    return 0;
+
+
     {
         using Algorithm::LongestConsecutiveSequence::getTestCases;
         using Algorithm::LongestConsecutiveSequence::Solution;
