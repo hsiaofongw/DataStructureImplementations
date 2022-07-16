@@ -11,7 +11,14 @@
 #include <iostream>
 
 namespace Algorithm {
+
     namespace SpiralMatrix {
+
+        /**
+         * Spiral 顺序遍历二级数组：
+         *
+         * 思路：设定一些 turningPoints, 在到达 turningPoint 时掉头（90 度相对于当前顺时针转向）。
+         */
         
         using std::vector;
         
