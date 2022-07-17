@@ -11,8 +11,29 @@
 #include "Algorithms/LongestConsecutiveSequence.hpp"
 #include "Algorithms/MergeIntervals.hpp"
 #include "Algorithms/MinPathSum.hpp"
+#include "Algorithms/MaximumRectangle.hpp"
 
 int main() {
+
+    {
+        using Algorithm::MaximumRectangle::getTestCases;
+        using Algorithm::MaximumRectangle::Solution;
+
+        Solution solution;
+        auto testCases = getTestCases();
+        size_t caseId = 0;
+        for (auto &testCase : testCases) {
+            int result = solution.maximalRectangle(testCase.first);
+            int expected = testCase.second;
+            std::cout << "CaseId: " << caseId++ << "\n";
+            std::cout << "Output: " << result << "\n";
+            std::cout << "Expected: " << expected << "\n";
+            assert((result == expected));
+        }
+    }
+
+    return 0;
+
     {
         using Algorithm::MinPathSum::getTestCases;
         using Algorithm::MinPathSum::Solution;
@@ -58,15 +79,7 @@ int main() {
 
     return 0;
 
-    std::vector<std::vector<char>> testCase0 = {
-            { '1', '0' },
-            { '1', '0' }
-    };
 
-    auto answer = Algorithm::MaximumRectangle::Solution::maximalRectangle(testCase0);
-    std::cout << answer << "\n";
-
-    return 0;
 
     for (size_t i = 0; i < 8; ++i) {
         const size_t problemSizeN = i+1;
