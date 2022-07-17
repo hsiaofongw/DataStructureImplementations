@@ -1,11 +1,7 @@
 #include <iostream>
-#include <random>
-#include <unordered_map>
 #include <map>
 #include <set>
 #include "DataStructures/RedBlackTree.hpp"
-#include "Algorithms/ReverseLinkedList.hpp"
-#include "Algorithms/LongestPalindromeSubString.hpp"
 #include "Algorithms/TrapRainWater.hpp"
 #include "Utils/PrintVector.hpp"
 #include "Algorithms/SubStringSearch.hpp"
@@ -14,38 +10,24 @@
 #include "Algorithms/SpiralMatrix.hpp"
 #include "Algorithms/LongestConsecutiveSequence.hpp"
 #include "Algorithms/MergeIntervals.hpp"
-
-bool verifyTwoNumberListIdentical(const std::vector<uint64_t>& lst1, const std::vector<uint64_t>& lst2) {
-    auto lst1Stat = std::unordered_map<uint64_t, size_t> {};
-    auto lst2Stat = std::unordered_map<uint64_t, size_t> {};
-
-    for (auto &num : lst1) {
-        auto count = lst1Stat[num];
-        lst1Stat[num] = count + 1;
-    }
-
-    for (auto &num : lst2) {
-        auto count = lst2Stat[num];
-        lst2Stat[num] = count + 1;
-    }
-
-    return lst1Stat == lst2Stat;
-}
-
-std::unique_ptr<std::vector<bool>> makeSampleVector(size_t population) {
-    auto randomDevice = std::random_device {};
-    auto randomEngine = std::default_random_engine { randomDevice() };
-    auto distribution = std::bernoulli_distribution {};
-    auto sampleVectorPtr = std::make_unique<std::vector<bool>>();
-    for (size_t i = 0; i < population; ++i) {
-        auto sampleBit = static_cast<bool>(distribution(randomEngine));
-        sampleVectorPtr->push_back(sampleBit);
-    }
-
-    return sampleVectorPtr;
-}
+#include "Algorithms/MinPathSum.hpp"
 
 int main() {
+    {
+        using Algorithm::MinPathSum::getTestCases;
+        using Algorithm::MinPathSum::Solution;
+
+        Solution solution;
+        auto testCases = getTestCases();
+        for (std::pair<Interface::IntMatrix, int> &testCase : testCases) {
+            auto result = solution.minPathSum(testCase.first);
+            auto expected = testCase.second;
+            assert((result == expected));
+        }
+    }
+
+    return 0;
+
     {
         using Algorithm::MergeIntervals::getTestCases;
         using Algorithm::MergeIntervals::Solution;
