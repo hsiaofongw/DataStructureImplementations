@@ -19,23 +19,21 @@ namespace Algorithm {
 
         TestCases getTestCases() {
             return {
+                    {{{'1','1','1','1','1','1','1','1'},{'1','1','1','1','1','1','1','0'},{'1','1','1','1','1','1','1','0'},{'1','1','1','1','1','0','0','0'},{'0','1','1','1','1','0','0','0'}}, 21},
                     {{{'1','0','1','0','0'},{'1','0','1','1','1'},{'1','1','1','1','1'},{'1','0','0','1','0'}}, 6},
                     {{{'0'}}, 0},
                     {{{'1'}}, 1},
-                    {{{'1','0'},{'1','0'}}, 2},
-                    {{{'1','1','1','1','1','1','1','1'},{'1','1','1','1','1','1','1','0'},{'1','1','1','1','1','1','1','0'},{'1','1','1','1','1','0','0','0'},{'0','1','1','1','1','0','0','0'}}, 21}
+                    {{{'1','0'},{'1','0'}}, 2}
             };
         }
 
         class Solution {
+
+
         public:
+
+
             int maximalRectangle(vector<vector<char>>& matrix) {
-                struct Cell {
-                    int right;
-                    int down;
-                    int rectWidth;
-                    int rectHeight;
-                };
 
                 int charToNum[256];
                 charToNum['1'] = 1;
@@ -48,35 +46,25 @@ namespace Algorithm {
                     row.resize(nCols);
                 }
 
-                // 计算 f[N-1][M-1]
                 auto &corner = cells[nRows-1][nCols-1];
                 int cornerDigit = charToNum[matrix[nRows-1][nCols-1]];
                 corner.right = cornerDigit;
                 corner.down = cornerDigit;
-                corner.rectHeight = cornerDigit;
-                corner.rectWidth = cornerDigit;
 
-                // 计算 f[...][M-1]（除 f[N-1][M-1] 之外的）
                 for (size_t offset = 1; offset < nRows; ++offset) {
                     size_t i = nRows-1-offset;
                     size_t j = nCols-1;
                     cells[i][j].right = charToNum[matrix[i][j]];
                     cells[i][j].down = cells[i][j].right * (1+cells[i+1][j].down);
-                    cells[i][j].rectWidth = cells[i][j].right;
-                    cells[i][j].rectHeight = cells[i][j].down;
                 }
 
-                // 计算 f[N-1][...]（除 f[N-1][M-1] 之外的）
                 for (size_t offset = 1; offset < nCols; ++offset) {
                     size_t i = nRows-1;
                     size_t j = nCols-1-offset;
                     cells[i][j].down = charToNum[matrix[i][j]];
                     cells[i][j].right = cells[i][j].down * (1+cells[i][j+1].right);
-                    cells[i][j].rectHeight = cells[i][j].down;
-                    cells[i][j].rectWidth = cells[i][j].right;
                 }
 
-                // 计算 f[...][...] 之前先计算 down 和 right 字段的值：每个 cell 向下，向右的 1 延展的长度
                 for (size_t iOffset = 1; iOffset < nRows; ++iOffset) {
                     for (size_t jOffset = 1; jOffset < nCols; ++jOffset) {
                         size_t i = nRows-1-iOffset;
@@ -94,56 +82,51 @@ namespace Algorithm {
                     }
                 }
 
-                for (size_t iOffset = 1; iOffset < nRows; ++iOffset) {
-                    for (size_t jOffset = 1; jOffset < nCols; ++jOffset) {
-                        size_t i = nRows-1-iOffset;
-                        size_t j = nCols-1-jOffset;
-                        if (cells[i][j].right != 0) {
-                            // 这其实和 cells[i][j].down != 0 是一样的
-
-                            auto &cell = cells[i][j];
-                            cell.rectWidth = 0;
-                            cell.rectHeight = 0;
-                            const auto &rightNeighbor = cells[i][j+1];
-                            const auto &downNeighbor = cells[i+1][j];
-
-                            // candidate solution 1
-                            int h1 = cell.down;
-                            int w1 = 1;
-
-                            // candidate solution 2
-                            int h2 = std::min(cell.down, rightNeighbor.rectHeight);
-                            int w2 = 1 + rightNeighbor.rectWidth;
-
-                            // candidate solution 3
-                            int h3 = 1;
-                            int w3 = cell.right;
-
-                            // candidate solution 4
-                            int h4 = 1 + downNeighbor.rectHeight;
-                            int w4 = std::min(cell.right, downNeighbor.rectWidth);
-
-                            // find area maximal within candidates
-                            auto updateDim = [&cell](int h, int w) -> void {
-                                if (h*w > cell.rectHeight*cell.rectWidth) {
-                                    cell.rectHeight = h;
-                                    cell.rectWidth = w;
+                size_t maxArea = 0;
+                for (size_t nCol = 1; nCol <= nCols; ++nCol) {
+                    for (size_t nRow = 1; nRow <= nRows; ++nRow) {
+                        for (size_t i = 0; i <= nRows-nRow; ++i) {
+                            for (size_t j = 0; j <= nCols-nCol; ++j) {
+                                if (isRect(cells, i, j, nCol, nRow)) {
+                                     maxArea = std::max(maxArea, nRow*nCol);
                                 }
-                            };
-                            updateDim(h1, w1);
-                            updateDim(h2, w2);
-                            updateDim(h3, w3);
-                            updateDim(h4, w4);
+                            }
                         }
                     }
                 }
 
-                int maxArea = 0;
-                for (size_t i = 0; i < nRows; ++i)
-                    for (size_t j = 0; j < nCols; ++j)
-                        maxArea = std::max(maxArea, cells[i][j].rectWidth*cells[i][j].rectHeight);
+                return static_cast<int>(maxArea);
+            }
 
-                return maxArea;
+        private:
+
+            struct Cell {
+                int right;
+                int down;
+            };
+
+            /**
+             * 若 cells 矩阵的矩形区域 [i, i+h) x [j, j+w) 内全是 1, 则返回 true, 否则返回 false
+             */
+            bool isRect(
+                    const vector<vector<Cell>> &cells,
+                    size_t i,
+                    size_t j,
+                    size_t w,
+                    size_t h
+            ) {
+
+                if (h == 1) {
+                    return cells[i][j].right >= w;
+                } else if (w == 1) {
+                    return cells[i][j].down >= h;
+                } else if (h >= 2 && w >= 2) {
+                    return isRect(cells, i, j, 1, h) &&
+                            isRect(cells, i, j, w, 1) &&
+                            isRect(cells, i+1, j+1, w-1, h-1);
+                } else {
+                    assert(false);
+                }
             }
         };
     }
