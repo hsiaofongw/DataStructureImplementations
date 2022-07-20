@@ -12,6 +12,25 @@
 namespace Algorithm {
     namespace WildcardMatch {
 
+        /**
+         * 正则匹配问题：
+         *
+         * 问题描述：
+         * 给你一个 const char *s 代表字符串，const char *p 代表正则符号序列（正则表达式也就是说），
+         * s 的长度是 N, p 的长度是 M,
+         * 试判定 s 与 p 是否匹配。
+         *
+         * 思路：
+         * 定义函数：
+         * isMatch(sequenceLength: int, patternLength: int) -> bool
+         * 表示子串 s[0..sequenceLength] 与子 pattern p[0..patternLength] 是否匹配。
+         *
+         * 我们从 size_t i = 0, j = 0; 开始，知道 isMatch(i, j) = 1;
+         * 然后我们一步一步增大 i 和 j, 用 DP 的方式构筑越来越大的 i, j 的 isMatch(i, j) 值。
+         *
+         * 最终算出的 isMatch(N, M) 就是我们想要的答案。
+         */
+
         using std::string;
 
         class Solution {
