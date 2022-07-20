@@ -70,9 +70,20 @@ namespace Algorithm {
                 auto nRows = matrix.size();
                 auto nCols = matrix[0].size();
                 using SizeT = decltype(nRows);
-                auto extendRect = [&nRows, &nCols, &matrix](SizeT i, SizeT j) -> SizeT {
-                    SizeT maxRectArea = 0;
+                auto extendRect = [&nRows, &nCols, &matrix](SizeT i, SizeT j, SizeT currentMaxRectArea) -> SizeT {
+                    SizeT maxRectArea = currentMaxRectArea;
+
+                    SizeT potential = (nCols-j) * (nRows-i);
+                    if (potential <= currentMaxRectArea) {
+                        return maxRectArea;
+                    }
+
                     for (SizeT w = 1; j + w <= nCols && matrix[i][j+w-1] == '1'; ++w) {
+                        SizeT subPotential = (nRows-i) * w;
+                        if (subPotential < currentMaxRectArea) {
+                            continue;
+                        }
+
                         bool isRect = true;
                         for (SizeT h = 1; i + h <= nRows && isRect; ++h) {
                             for (SizeT dJ = 0; dJ < w && isRect; ++dJ) {
@@ -90,7 +101,7 @@ namespace Algorithm {
                 SizeT maxRectArea = 0;
                 for (SizeT i = 0; i < nRows; ++i) {
                     for (SizeT j = 0; j < nCols; ++j) {
-                        maxRectArea = std::max(maxRectArea, extendRect(i, j));
+                        maxRectArea = std::max(maxRectArea, extendRect(i, j, maxRectArea));
                     }
                 }
 
