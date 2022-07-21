@@ -12,8 +12,26 @@
 #include "Algorithms/MergeIntervals.hpp"
 #include "Algorithms/MinPathSum.hpp"
 #include "Algorithms/MaximumRectangle.hpp"
+#include "Algorithms/QuickSort.hpp"
+
+int8_t comparator(const int32_t &a, const int32_t &b) {
+    return a-b;
+}
 
 int main() {
+
+    {
+        using Algorithm::Sorting::getTestCases;
+        using Algorithm::Sorting::quickSort;
+
+        auto testCases = getTestCases();
+        for (auto &testCase : testCases) {
+            quickSort(testCase.question, 0, testCase.question.size(), comparator);
+            assert((testCase.question == testCase.expectedOutput));
+        }
+    }
+
+    return 0;
 
     {
         using Algorithm::MaximumRectangle::getTestCases;
