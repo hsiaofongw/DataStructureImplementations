@@ -19,6 +19,10 @@ namespace Algorithm {
             // 让一个 std::initializer<TestCase> 被隐式地转为 std::vector<TestCase>
             return {
                 {
+                    .question = SignedVector { 67, 56, 32, 11, 199, 280, 2828 },
+                    .expectedOutput = SignedVector { 11, 32, 56, 67, 199, 280, 2828 }
+                },
+                {
                     .question = SignedVector { },
                     .expectedOutput = SignedVector { }
                 },
@@ -57,6 +61,14 @@ namespace Algorithm {
                 {
                     .question = SignedVector { 1,2,3,4 },
                     .expectedOutput = SignedVector { 1,2,3,4 }
+                },
+                {
+                    .question = SignedVector { 4,1,3,8,5 },
+                    .expectedOutput = SignedVector { 1,3,4,5,8 }
+                },
+                {
+                    .question = SignedVector { 11, 12, 13, 14, 1 },
+                    .expectedOutput = SignedVector { 1, 11, 12, 13, 14 }
                 }
             };
         }
@@ -99,7 +111,7 @@ namespace Algorithm {
             ++leftCnt;
 
             // 现在 leftCnt 表示 ary[begin..begin+N] 范围内小于等于 pivot 的元素的个数
-            // 它的值至少是 1.
+            // 它的值，随着输入的不同，出现的范围是在 [1, N].
 
             // 把轴元素换回正确位置
             // 使得轴元素左侧（如果有）都不超过它，右侧都大于它
