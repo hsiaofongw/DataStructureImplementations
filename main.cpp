@@ -14,23 +14,17 @@
 #include "Algorithms/MaximumRectangle.hpp"
 #include "Algorithms/QuickSort.hpp"
 
-int8_t comparator(const int32_t &a, const int32_t &b) {
-    if (a < b) {
-        return -1;
-    } else if (a > b) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
-
 int main() {
 
     {
         using Algorithm::Sorting::getTestCases;
         using Algorithm::Sorting::quickSort;
+        using Algorithm::Sorting::Comparator;
 
         auto testCases = getTestCases();
+        Comparator<int32_t> comparator = [](const int32_t &a, const int32_t &b) -> bool {
+            return a <= b;
+        };
         for (auto &testCase : testCases) {
             quickSort(testCase.question, 0, testCase.question.size(), comparator);
             assert((testCase.question == testCase.expectedOutput));

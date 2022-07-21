@@ -6,11 +6,14 @@
 #define DATASTRUCTUREIMPLEMENTATIONS_QUICKSORT_HPP
 
 #include <vector>
+#include <functional>
 #include "../Interfaces/TestCase.hpp"
 
 namespace Algorithm {
     namespace Sorting {
 
+        template <typename T>
+        using Comparator = std::function<bool (const T &a, const T &b)>;
         using SignedInteger = int32_t;
         using SignedVector = std::vector<SignedInteger>;
         using TestCase = Interface::TestCase<SignedVector, SignedVector>;
@@ -81,7 +84,7 @@ namespace Algorithm {
         }
 
         template <typename T>
-        void quickSort(std::vector<T> &ary, intptr_t begin, intptr_t N, int8_t (*compareFunc)(const T& a, const T& b)) {
+        void quickSort(std::vector<T> &ary, intptr_t begin, intptr_t N, Comparator<T> &isLessThanOrEqual) {
 
             // 若 N <= 1, 则无需对比。
             if (N <= 1)
@@ -100,7 +103,7 @@ namespace Algorithm {
             size_t leftCnt = 0;
             for (size_t i = 0; i < N-1; ++i) {
                 size_t elementIdx = begin+1+i;
-                if (compareFunc(ary[elementIdx], ary[begin]) <= 0) {
+                if (isLessThanOrEqual(ary[elementIdx], ary[begin])) {
                     ++leftCnt;
                     exchange(ary, elementIdx, begin+leftCnt);
                 }
@@ -118,10 +121,10 @@ namespace Algorithm {
             exchange(ary, begin, begin+leftCnt-1);
 
             // 继续对轴元素左边 leftCnt - 1 个元素进行排序
-            quickSort(ary, begin, leftCnt - 1, compareFunc);
+            quickSort(ary, begin, leftCnt - 1, isLessThanOrEqual);
 
             // 继续对轴元素右边 N - leftCnt 个元素排序
-            quickSort(ary, begin+leftCnt, N-leftCnt, compareFunc);
+            quickSort(ary, begin+leftCnt, N-leftCnt, isLessThanOrEqual);
         }
     }
 }
