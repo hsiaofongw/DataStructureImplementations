@@ -131,6 +131,10 @@ namespace Algorithm {
             size_t colIdx;
         };
 
+        /**
+         * 一个数独棋盘可看成由 9 行、9 列、9 个 sub-box 组成的，
+         * 一个 SudokuState 对象用来记录其中每一行/列/sub-box有哪些数字是已经出现的，哪些没有出现。
+         */
         template <size_t N = 9>
         struct SudokuState {
             std::array<std::bitset<N>, N> rowBitmaps;
@@ -138,8 +142,10 @@ namespace Algorithm {
             std::array<std::bitset<N>, N> subBoxBitmaps;
         };
 
+        /** 记录一个数独棋盘上的数字填写情况，0 表示未填 */
         using Board = std::vector<std::vector<uint8_t>>;
 
+        /** 递归实现的回溯式求解算法，能够收集所有解 */
         template <size_t N = 9>
         bool doSolveSudoku(
                 Board &board,
@@ -204,8 +210,14 @@ namespace Algorithm {
             return false;
         }
 
+        /**
+         * 求给定数独问题的一个解，如果有的话，
+         * 如果问题无解，那么返回一个空指针。
+         *
+         * 无论是否有解，传入的那个 Board 在此函数中间执行过程中都会被修改（最后可能会被复原）。
+         */
         template <size_t N = 9>
-        void solveSoduku(Board &board) {
+        std::unique_ptr<Board> solveSudoku(Board &board) {
             SudokuState<> state;
             std::stack<Point> unFilledSlots;
             for (size_t i = 0; i < N; ++i) {
@@ -219,8 +231,28 @@ namespace Algorithm {
 
             std::vector<Board> solutions {};
             doSolveSudoku<>(board, state, unFilledSlots, solutions, true);
+
+            if (solutions.empty()) {
+                return nullptr;
+            }
+
+            return std::make_unique<Board>(std::move(solutions[0]));
         }
 
+        /**
+         * 求给定数独问题的所有解或者只求一个解，如果有的话。
+         * 无论是否有解，在求解过程中，传入的那个 Board 对象的内容都会被修改。
+         *
+         * 如果无解，该函数返回的 std::vector<Board> 为空。
+         *
+         * 无论是否有解，传入的那个 Board 在此函数中间执行过程中都会被修改（最后可能会被复原）。
+         */
+        template <size_t N = 9>
+        std::vector<Board> getSudokuSolutions(Board &boardConfiguration);
+
+        /**
+         * 将一个数独问题的 Solution 转成那种方便打印和展示的字符串形式。
+         */
         std::string boardToStr(const Board &board) {
             size_t len = 1+3+1+3+1+3+1;
             char boardView[len][len];
