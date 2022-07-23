@@ -19,8 +19,23 @@
 #include <algorithm>
 #include "Utils/RandomInteger.h"
 #include "Algorithms/MinEditDistance.hpp"
+#include "Algorithms/DistinctSubsequences.hpp"
 
 int main() {
+
+    {
+        using Algorithm::DistinctSubsequences::getTestCases;
+        using Algorithm::DistinctSubsequences::numDistinct;
+
+        for (const auto &testCase : getTestCases()) {
+            auto actual = numDistinct(testCase.originString, testCase.subSequence);
+            assert((actual == testCase.desiredOutput));
+        }
+
+    }
+
+    return 0;
+
 
     {
         using Algorithm::MinEditDistance::getMinEditDistance;
