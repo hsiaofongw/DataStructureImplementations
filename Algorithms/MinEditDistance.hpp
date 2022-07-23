@@ -37,8 +37,16 @@ namespace Algorithm {
          *
          * cost(i,j) == 0, 如果 a[i] == b[j], 否则 cost(i,j) == 1.
          *
-         * 函数 minCost 的性质 1,2 立刻 leads to 一个 DP 的 solution 如下：
+         * 由函数 minCost 的性质 1,2 可以得到一个 DP 的 solution.
          *
+         * Follow up:
+         *
+         * 下列代码把 minCost(i, j), i = 0, 1, ..., N, j = 0, 1, ..., M 总共 (N+1)*(M+1) 个值
+         * 全部都计算了出来。提问：
+         *
+         * 1. 这样做是必要的吗？
+         *    或者说：所有 minCost(i,j) 的值都必须算出来才能算出来 minCost(0,0) 吗？
+         * 2. 如何优化代码，使得只有那些必须需要知道的 minCost(i,j) 被计算出来？
          */
         template <typename SequenceItemType>
         size_t getMinEditDistance(SequenceItemType *a, SequenceItemType *b, size_t lenA, size_t lenB) {

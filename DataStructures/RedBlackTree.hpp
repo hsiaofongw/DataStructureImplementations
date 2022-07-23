@@ -649,18 +649,23 @@ namespace DataStructure {
 
                 if (is3Node(root)) {
                     if (is2Node(root->right)) {
-                        if (is3Node(root->left)) {
-                            root = moveSiblingFromLeft(root);
+                        root = rotateRight(root);
+                        if (is3Node(root->right->left)) {
+                            root->right = moveSiblingFromLeft(root->right);
+                            root->right->right = doDeleteMaxRecursive(root->right->right);
+                            updateSize(root->right);
+                        } else if (is2Node(root->left->right)) {
+                            merge2Nodes(root->right);
                             root->right = doDeleteMaxRecursive(root->right);
-                        } else if (is2Node(root->left)) {
-                            merge2Nodes(root);
-                            root = doDeleteMaxRecursive(root);
                         } else {
                             assert((false));
                         }
+                        root = rotateLeft(root);
+                        updateSize(root);
                     } else if (is3Node(root->right)) {
                         root->right = doDeleteMaxRecursive(root->right);
                     } else {
+                        // 触底
                         return root->left;
                     }
                 } else if (is4Node(root)) {
@@ -682,6 +687,7 @@ namespace DataStructure {
                         updateSize(root->right);
                         updateSize(root);
                     } else {
+                        // 触底
                         root->right = nullptr;
                         updateSize(root);
                         return root;

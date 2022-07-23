@@ -1,0 +1,14 @@
+//
+// Created by 韦晓枫 on 2022/7/8.
+//
+
+#ifndef DATASTRUCTUREIMPLEMENTATIONS_TOWEROFHANOI_HPP
+#define DATASTRUCTUREIMPLEMENTATIONS_TOWEROFHANOI_HPP
+
+namespace Algorithm {
+    namespace HanoiTower {
+
+    }
+}
+
+#endif //DATASTRUCTUREIMPLEMENTATIONS_TOWEROFHANOI_HPP
