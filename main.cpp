@@ -18,8 +18,23 @@
 #include "Algorithms/Dijkstra.hpp"
 #include <algorithm>
 #include "Utils/RandomInteger.h"
+#include "Algorithms/MinEditDistance.hpp"
 
 int main() {
+
+    {
+        using Algorithm::MinEditDistance::getMinEditDistance;
+        using Algorithm::MinEditDistance::getTestCases;
+
+        auto testCases = getTestCases();
+        for (const auto &testCase : testCases) {
+            size_t actual = getMinEditDistance(testCase.lhs, testCase.rhs);
+            assert((actual == testCase.expectedOutput));
+        }
+    }
+
+    return 0;
+
     {
         using Algorithm::Sorting::getTestCases;
         using Algorithm::Sorting::quickSort;

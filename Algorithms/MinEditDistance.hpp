@@ -10,6 +10,7 @@
 #include <vector>
 #include <algorithm>
 #include <string>
+#include <cmath>
 
 namespace Algorithm {
     namespace MinEditDistance {
@@ -41,38 +42,96 @@ namespace Algorithm {
          */
         template <typename SequenceItemType>
         size_t getMinEditDistance(SequenceItemType *a, SequenceItemType *b, size_t lenA, size_t lenB) {
-            std::vector<std::vector<size_t>> editGraph (lenA+1);
-            for (auto &row : editGraph) {
+            std::vector<std::vector<size_t>> minCost (lenA + 1);
+            for (auto &row : minCost) {
                 row.resize(lenB + 1);
             }
 
-            editGraph[lenA][lenB] = 0;
+
+            auto printMinCostTable = [&minCost, a, b, lenA, lenB]() -> void {
+                size_t maxAbsCost = 0;
+                for (const auto &row : minCost) {
+                    for (const auto &value : row) {
+                        maxAbsCost = std::max(value, maxAbsCost);
+                    }
+                }
+                double maxCost = maxAbsCost;
+                double log10_float_t = std::log(maxCost) / std::log(10.0);
+                int log10 = std::ceil(log10_float_t);
+
+                int cellWidth = std::max(2, log10);
+                std::cout << std::setw(cellWidth) << "";
+                for (size_t j = 0; j < lenB; ++j) {
+                    std::cout << std::setw(cellWidth) << b[j];
+                }
+                std::cout << "\n";
+
+                for (size_t i = 0; i < lenA+1; ++i) {
+                    if (i < lenA) {
+                        std::cout << std::setw(cellWidth) << a[i];
+                    } else {
+                        std::cout << std::setw(cellWidth) << "";
+                    }
+
+                    for (size_t j = 0; j < lenB+1; ++j) {
+                        std::cout << std::setw(cellWidth) << minCost[i][j];
+                    }
+                    std::cout << "\n";
+                }
+            };
+
+            minCost[lenA][lenB] = 0;
             for (size_t di = 1; di < lenA+1; ++di) {
-                editGraph[lenA-di][lenB] = editGraph[lenA-di+1][lenB] + 1;
+                minCost[lenA - di][lenB] = minCost[lenA - di + 1][lenB] + 1;
             }
             for (size_t dj = 1; dj < lenB+1; ++dj) {
-                editGraph[lenA][lenB-dj] = editGraph[lenA][lenB-dj+1] + 1;
+                minCost[lenA][lenB - dj] = minCost[lenA][lenB - dj + 1] + 1;
             }
+
+            // printMinCostTable();
 
             for (size_t di = 1; di < lenA+1; ++di) {
                 for (size_t dj = 1; dj < lenB+1; ++dj) {
                     size_t i = lenA-di;
                     size_t j = lenB-dj;
 
-                    size_t replacementCost = a[i] == a[j] ? 0 : 1;
-                    editGraph[i][j] = std::min({
-                        editGraph[i+1][j+1]+replacementCost,
-                        editGraph[i+1][j]+1,
-                        editGraph[i][j+1]+1
+                    size_t replacementCost = a[i] == b[j] ? 0 : 1;
+                    minCost[i][j] = std::min({
+                         minCost[i + 1][j + 1] + replacementCost,
+                         minCost[i + 1][j] + 1,
+                         minCost[i][j + 1] + 1
                     });
                 }
             }
 
-            return editGraph[0][0];
+            // printMinCostTable();
+
+            return minCost[0][0];
         }
 
         size_t getMinEditDistance(const std::string &a, const std::string &b) {
             return getMinEditDistance(a.data(), b.data(), a.size(), b.size());
+        }
+
+        struct TestCase {
+             std::string lhs;
+             std::string rhs;
+             size_t expectedOutput;
+        };
+
+        std::vector<TestCase> getTestCases() {
+            return {
+                TestCase {
+                    .lhs = "horse",
+                    .rhs = "ros",
+                    .expectedOutput = 3
+                },
+                TestCase {
+                    .lhs = "intention",
+                    .rhs = "execution",
+                    .expectedOutput = 5
+                }
+            };
         }
     }
 }
