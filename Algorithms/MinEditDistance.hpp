@@ -32,9 +32,12 @@ namespace Algorithm {
          * 1. minCost(N,M) == 0;
          * 2. minCost(i,j) == min{ 1+minCost(i+1,j), 1+minCost(i,j+1), cost(i,j)+minCost(i+1,j+1) };
          *
-         * 式中：
+         * 性质 2 要求 0 <= i < N, 且 0 <= j < M, 并且式中：
          *
          * cost(i,j) == 0, 如果 a[i] == b[j], 否则 cost(i,j) == 1.
+         *
+         * 函数 minCost 的性质 1,2 立刻 leads to 一个 DP 的 solution 如下：
+         *
          */
         template <typename SequenceItemType>
         size_t getMinEditDistance(SequenceItemType *a, SequenceItemType *b, size_t lenA, size_t lenB) {
