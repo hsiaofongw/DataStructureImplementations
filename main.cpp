@@ -13,8 +13,40 @@
 #include "Algorithms/MinPathSum.hpp"
 #include "Algorithms/MaximumRectangle.hpp"
 #include "Algorithms/QuickSort.hpp"
+#include <fstream>
+#include <string>
+#include "Algorithms/Dijkstra.hpp"
+#include <algorithm>
 
 int main() {
+    {
+        using Algorithm::DijkstraShortestPathDistanceAlgorithm::loadTestCase;
+        using Algorithm::DijkstraShortestPathDistanceAlgorithm::NodeId;
+        using Algorithm::DijkstraShortestPathDistanceAlgorithm::DistanceMatrix;
+        using Algorithm::DijkstraShortestPathDistanceAlgorithm::calculateMinDistances;
+        using Algorithm::DijkstraShortestPathDistanceAlgorithm::Distance;
+
+        auto testCase = loadTestCase();
+
+        DistanceMatrix minDist;
+        NodeId startNodeId = 0;
+        calculateMinDistances(*(testCase.graphDescriptor.adjacency), startNodeId, minDist);
+        DistanceMatrix &correctMinDist = *(testCase.correctMinDist);
+        for (const auto &pair : minDist[startNodeId]) {
+            Distance actual = pair.second;
+            Distance expected = correctMinDist[startNodeId][pair.first];
+            std::cout << "minDist"
+                << "(" << startNodeId << ", " << pair.first << "): "
+                << "actual: " << actual << ", "
+                << "expected: " << expected << "\n";
+
+            assert((std::abs(actual - expected) < 0.001));
+        }
+
+        std::cout << "";
+    }
+
+    return 0;
 
     {
         using Algorithm::Sorting::getTestCases;

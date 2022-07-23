@@ -9,6 +9,8 @@
 #include <unordered_set>
 #include <limits>
 #include <queue>
+#include <memory>
+#include <fstream>
 
 namespace Algorithm {
     namespace DijkstraShortestPathDistanceAlgorithm {
@@ -35,7 +37,122 @@ namespace Algorithm {
         /** 距离矩阵 */
         using DistanceMatrix = std::unordered_map<NodeId, Connections>;
 
+        /** 有向图构造器 */
+        class DirectedGraphBuilder {
+        public:
+            /** 添加节点 */
+            void addVertex(NodeId nodeId) {
+                this->adjacency[nodeId];
+            }
+
+            /** 连接节点 */
+            void connect(NodeId from, NodeId to) {
+                this->addVertex(from);
+                this->addVertex(to);
+                this->adjacency[from][to];
+            }
+
+            /** 连接节点并赋权，也可以用来更新连接权值。 */
+            void connect(NodeId from, NodeId to, double weight) {
+                this->addVertex(from);
+                this->addVertex(to);
+                this->adjacency[from][to] = weight;
+            }
+
+            /** 清空内部的图的数据的暂存区 */
+            void clear() {
+                this->adjacency.clear();
+            }
+
+            /** 导出图 */
+            std::unique_ptr<DistanceMatrix> dump() {
+                return std::make_unique<DistanceMatrix>(this->adjacency);
+            }
+
+        private:
+            DistanceMatrix adjacency;
+        };
+
         /**
+         * 此 struct 用于描述一个图：
+         * - 它有多少个节点：nVertices
+         * - 多少条边：nEdges
+         * - 节点和节点之间的连接性如何：adjacency
+         */
+        struct GraphDescriptor {
+            uint32_t nVertices;
+            uint32_t nEdges;
+            std::unique_ptr<DistanceMatrix> adjacency;
+        };
+
+        /**
+         * 此 struct 用于描述一个 shortestPathDistance 的测试用例：
+         * - 作为输入的图描述对象：graphDescriptor
+         * - 正确的 0 到其它节点之间的最短距离：correctMinDist
+         */
+        struct TestCase {
+            GraphDescriptor graphDescriptor;
+            std::unique_ptr<DistanceMatrix> correctMinDist;
+        };
+
+        /** 以特定方式解析一个图数据文件 */
+        decltype(auto) parseGraphData(std::ifstream &graphDataFileStream, size_t linesCount) {
+            DirectedGraphBuilder graphBuilder;
+            for (size_t lineIdx = 0; lineIdx < linesCount; ++lineIdx) {
+                NodeId from = 0;
+                NodeId to = 0;
+                Distance weight = 0;
+
+                assert((graphDataFileStream.good()));
+                graphDataFileStream >> from;
+
+                assert((graphDataFileStream.good()));
+                graphDataFileStream >> to;
+
+                assert((graphDataFileStream.good()));
+                graphDataFileStream >> weight;
+
+                graphBuilder.connect(from, to, weight);
+            }
+
+            return graphBuilder.dump();
+        }
+
+        /**
+         * 加载工作目录下的 SampleData/tinyEWD.txt,
+         * 从该文件的文本数据解析得到 GraphDescriptor 形式的图数据。
+         */
+        TestCase loadTestCase() {
+            std::string graphDataFileRelPath = "SampleData/tinyEWD/tinyEWD.txt";
+            std::ifstream graphDataStream (graphDataFileRelPath, std::ios::in);
+            assert((graphDataStream.is_open()));
+
+            uint32_t verticesCount = 0;
+            uint32_t edgesCount = 0;
+            graphDataStream >> verticesCount;
+            graphDataStream >> edgesCount;
+
+            std::string correctMinDistFileRelPath = "SampleData/tinyEWD/minDist.txt";
+            std::ifstream minDistFileStream (correctMinDistFileRelPath, std::ios::in);
+            assert((minDistFileStream.is_open()));
+
+            return TestCase {
+                .graphDescriptor = GraphDescriptor {
+                    .nVertices = verticesCount,
+                    .nEdges = edgesCount,
+                    .adjacency = parseGraphData(graphDataStream, edgesCount)
+                },
+                .correctMinDist = parseGraphData(minDistFileStream, verticesCount)
+            };
+        }
+
+        /**
+         * 功能说明：
+         * 此函数接受一个邻接矩阵形式编码的图 g, 设 g 有 V 个节点，且 V >= 1.
+         * 然后此函数会计算 g 从起始节点 start 到其它节点的最短距离：
+         * minDist[start][i], i = 0, 1, ..., V-1,
+         * 并且将计算结果通过引用存储在 minDist 参数中。
+         *
          * 参数说明：
          * 1. distance[i] 表示节点 i 与节点 i 的邻居的连接权值；
          * 2. 如果 distance[j] 是一个默认构造的 Connections 对象的引用，则表示节点 j 没有到下一跳的连接；
@@ -49,7 +166,7 @@ namespace Algorithm {
             NodeId start,
             DistanceMatrix &minDist
         ) {
-            constexpr auto PositiveInfinity = std::numeric_limits<bool>::infinity();
+            constexpr double PositiveInfinity = std::numeric_limits<double>::infinity();
             for (const auto &pair : distance) {
                 NodeId nodeId = pair.first;
                 minDist[start][nodeId] = PositiveInfinity;
