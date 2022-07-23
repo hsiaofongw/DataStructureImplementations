@@ -8,6 +8,7 @@
 #include <vector>
 #include <functional>
 #include "../Interfaces/TestCase.hpp"
+#include "../Utils/RandomInteger.h"
 
 namespace Algorithm {
     namespace Sorting {
@@ -90,14 +91,9 @@ namespace Algorithm {
             if (N <= 1)
                 return;
 
-            // 计算轴下标
-            // 若 N 为奇数，pivot 在正中间，左右两侧长度各是 N-1 / 2;
-            // 若 N 为偶数，pivot 在正中间靠右，左侧长 N/2, pivot 自身占 1, pivot 右侧长 N/2-1;
-            size_t pivotIdx;
-            if (N%2 == 1)
-                pivotIdx = (N-1)/2 + begin;
-            else
-                pivotIdx = N/2 + begin;
+            // 随机选定 pivot 元素下标
+            Utils::RandomIntegerGenerator<size_t> pivotIdxGen (begin, begin+N-1);
+            size_t pivotIdx = pivotIdxGen.get();
 
             exchange(ary, begin, pivotIdx);
             size_t leftCnt = 0;

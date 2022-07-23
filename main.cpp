@@ -20,6 +20,22 @@
 #include "Utils/RandomInteger.h"
 
 int main() {
+    {
+        using Algorithm::Sorting::getTestCases;
+        using Algorithm::Sorting::quickSort;
+        using Algorithm::Sorting::Comparator;
+
+        auto testCases = getTestCases();
+        Comparator<int32_t> comparator = [](const int32_t &a, const int32_t &b) -> bool {
+            return a <= b;
+        };
+        for (auto &testCase : testCases) {
+            quickSort(testCase.question, 0, testCase.question.size(), comparator);
+            assert((testCase.question == testCase.expectedOutput));
+        }
+    }
+
+    return 0;
 
     {
         using Utils::RandomIntegerGenerator;
@@ -71,23 +87,6 @@ int main() {
         }
 
         std::cout << "";
-    }
-
-    return 0;
-
-    {
-        using Algorithm::Sorting::getTestCases;
-        using Algorithm::Sorting::quickSort;
-        using Algorithm::Sorting::Comparator;
-
-        auto testCases = getTestCases();
-        Comparator<int32_t> comparator = [](const int32_t &a, const int32_t &b) -> bool {
-            return a <= b;
-        };
-        for (auto &testCase : testCases) {
-            quickSort(testCase.question, 0, testCase.question.size(), comparator);
-            assert((testCase.question == testCase.expectedOutput));
-        }
     }
 
     return 0;
