@@ -17,8 +17,35 @@
 #include <string>
 #include "Algorithms/Dijkstra.hpp"
 #include <algorithm>
+#include "Utils/RandomInteger.h"
 
 int main() {
+
+    {
+        using Utils::RandomIntegerGenerator;
+
+        std::vector<std::pair<int32_t, int32_t>> randParams = {
+                {0, 0},
+                {0, 1},
+                {0, 3},
+                {2, 3},
+                {3, 3},
+                {0, 10},
+                {-4, -3},
+                {-5, -5}
+        };
+
+        for (const auto &pair : randParams) {
+            RandomIntegerGenerator<int32_t> randIntGen (pair.first, pair.second);
+            std::cout << "a = " << pair.first << ", " << "b = " << pair.second << "\n";
+            for (size_t i = 0; i < 10; ++i) {
+                std::cout << randIntGen.get() << "\n";
+            }
+        }
+    }
+
+    return 0;
+
     {
         using Algorithm::DijkstraShortestPathDistanceAlgorithm::loadTestCase;
         using Algorithm::DijkstraShortestPathDistanceAlgorithm::NodeId;
