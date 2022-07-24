@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <algorithm>
 
 namespace Algorithm {
     namespace WordBreak {
@@ -51,48 +52,40 @@ namespace Algorithm {
                   .s = "catsandog",
                   .wordDict = { "meow", "cat", "and" },
                   .expected = false
+              },
+              TestCase {
+                  .s = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab",
+                  .wordDict = {"a","aa","aaa","aaaa","aaaaa","aaaaaa","aaaaaaa","aaaaaaaa","aaaaaaaaa","aaaaaaaaaa"},
+                  .expected = false
               }
             };
         }
 
         class Solution {
-
-            using WordIndex = std::unordered_map<char, std::vector<size_t>>;
-
         public:
             bool wordBreak(std::string s, std::vector<std::string>& wordDict) {
-                WordIndex wordIndex;
-                size_t wordCnt = wordDict.size();
-                for (size_t idx = 0; idx < wordCnt; ++idx) {
-                    if (!wordDict[idx].empty()) {
-                        wordIndex[wordDict[idx][0]].push_back(idx);
-                    }
+
+                // 该索引用来快速判断一个给定长的 word 是否在 wordDict 中
+                std::unordered_map<size_t, std::unordered_set<std::string>> wordIndex;
+                for (const auto &word : wordDict) {
+                    wordIndex[word.size()].insert(word);
                 }
 
-                return wordBreak(s, 0, wordDict, wordIndex);
-            }
+                // canSuffixConstruct[i] 记录 s 的 i 长后缀可否由 wordDict 中的 word 构建
+                size_t N = s.size();
+                std::vector<uint8_t> canSuffixConstruct (N+1, 0);
+                canSuffixConstruct[0] = 1;
 
-        private:
-            bool wordBreak(
-                const std::string &s,
-                size_t offset,
-                const std::vector<std::string> &wordDict,
-                WordIndex &wordIndex
-            ) {
-                if (offset >= s.size()) {
-                    return true;
-                }
-
-                for (const auto &wordIdx : wordIndex[s[offset]]) {
-                    const std::string &word = wordDict[wordIdx];
-                    if (word.size() <= s.size()-offset && word == s.substr(offset, word.size())) {
-                        if (wordBreak(s, offset+word.size(), wordDict, wordIndex)) {
-                            return true;
+                for (size_t i = 1; i <= N; ++i) {
+                    for (size_t len = i; len >= 1; --len) {
+                        if (wordIndex[len].count(s.substr(N-i, len)) && canSuffixConstruct[i-len]) {
+                            canSuffixConstruct[i] = 1;
+                            break;
                         }
                     }
                 }
 
-                return false;
+                return canSuffixConstruct[N] == 1;
             }
         };
     }
