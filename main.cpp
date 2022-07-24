@@ -23,14 +23,15 @@
 
 int main() {
 
-
     {
-        using Algorithm::SubStringSearch::getTestCases;
         using Algorithm::SubStringSearch::KMPStringMatcher;
+        using Algorithm::SubStringSearch::getTestCases;
+
         for (const auto &testCase : getTestCases()) {
-            KMPStringMatcher m (testCase.pattern);
-            auto result = m.search(testCase.text);
-            std::cout << "Actual: " << result << ", " << "Expected: " << testCase.expectedAt << "\n";
+            KMPStringMatcher matcher (testCase.pattern);
+            auto result = matcher.search(testCase.text);
+            std::cout << "Found idx: " << result << ", "
+                << "Expected at: " << testCase.expectedAt << "\n";
             assert((result == testCase.expectedAt));
         }
     }
