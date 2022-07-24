@@ -45,17 +45,14 @@ namespace Algorithm {
              * 从而依据 Pattern 的内容完成对 DFA 的构建。
              */
             explicit KMPStringMatcher(std::string _pattern) : pattern(std::move(_pattern)), dfa() {
-                // Implement how to compute the DFA table in KMP algorithm
-                std::unordered_set<char> patternChars {};
-                for (const auto& patternChar : pattern) {
-                    patternChars.insert(patternChar);
-                }
-
-                size_t M = pattern.size();
                 if (pattern.empty()) {
                     return;
                 }
 
+                // Implement how to compute the DFA table in KMP algorithm
+                std::unordered_set<char> patternChars (pattern.begin(), pattern.end());
+
+                size_t M = pattern.size();
                 dfa.resize(M);
 
                 // When at initial state (a.k.a. state 0),
