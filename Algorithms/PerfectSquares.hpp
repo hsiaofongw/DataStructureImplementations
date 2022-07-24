@@ -53,24 +53,24 @@ namespace Algorithm {
             int numSquares(int n) {
                 double n_float = n;
                 double n_squareRoot = sqrt(n_float);
-                int n_ceil = ceil(n_squareRoot);
-                if (n_ceil > this->maxPrefix) {
-                    this->growMemoHeight(n_ceil);
+                int n_floor = floor(n_squareRoot);
+                if (n_floor > this->maxPrefix || n > this->maxN) {
+                    this->growMemo(std::max(n_floor, this->maxPrefix), std::max(n, this->maxN));
                 }
 
-                if (n > this->maxN) {
-                    this->grewMemoWidth(n);
-                }
-
-                return this->memo[maxPrefix-1][n];
+                return this->memo[n_floor-1][n];
             }
+
         private:
             int maxPrefix = 1;
             int maxN = 1;
             std::vector<std::vector<int>> memo;
 
-            void growMemoHeight(int newMaxPrefix) {
+            void growMemo(int newMaxPrefix, int newN) {
                 this->memo.resize(newMaxPrefix);
+                for (size_t h = 0; h < newMaxPrefix; ++h) {
+                    this->memo[h].resize(newN+1);
+                }
 
                 for (int n = 0; n <= this->maxN; ++n) {
                     for (int h = this->maxPrefix; h < newMaxPrefix; ++h) {
@@ -79,12 +79,6 @@ namespace Algorithm {
                 }
 
                 this->maxPrefix = newMaxPrefix;
-            }
-
-            void grewMemoWidth(int newN) {
-                for (auto &row : this->memo) {
-                    row.resize(newN+1);
-                }
 
                 for (int n = this->maxN+1; n <= newN; ++n) {
                     for (int h = 0; h < this->maxPrefix; ++h) {
@@ -107,10 +101,15 @@ namespace Algorithm {
                 }
 
                 int answer = this->memo[h-1][n];
-                for (int cnt = 1, remains = n - cnt * (h+1) * (h+1); remains >= 0; ++cnt) {
+                int cnt = 1;
+                int remains = n - cnt * (h+1) * (h+1);
+                while (remains >= 0) {
                     answer = std::min(answer, cnt + this->memo[h][remains]);
+
+                    ++cnt;
                     remains = n - cnt * (h+1) * (h+1);
                 }
+                this->memo[h][n] = answer;
             }
         };
     }

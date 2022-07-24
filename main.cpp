@@ -24,8 +24,23 @@
 #include "Algorithms/WordBreak.hpp"
 #include "Algorithms/Fibonacci.hpp"
 #include "Utils/PrintTable.hpp"
+#include "Algorithms/PerfectSquares.hpp"
 
 int main() {
+
+    {
+        using Algorithm::PerfectSquare::getTestCases;
+        using Algorithm::PerfectSquare::Solution;
+
+        Solution solution;
+        for (const auto &testCase : getTestCases()) {
+            auto result = solution.numSquares(testCase.n);
+            std::cout << "Result: " << result << ", " << "Expected: " << testCase.expected << "\n";
+            assert((result == testCase.expected));
+        }
+    }
+
+    return 0;
 
     {
         std::vector<int64_t> index { 11, 1234, 151 };
