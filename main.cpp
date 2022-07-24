@@ -26,26 +26,36 @@
 #include "Utils/PrintTable.hpp"
 #include "Algorithms/PerfectSquares.hpp"
 #include <array>
+#include "Algorithms/Subsets.hpp"
+#include <algorithm>
 
 int main() {
 
     {
-        using Algorithm::PerfectSquare::numPerfectSquaresMemo;
-
-        numPerfectSquaresMemo();
-    }
-
-    return 0;
-
-    {
-        using Algorithm::PerfectSquare::getTestCases;
-        using Algorithm::PerfectSquare::Solution;
+        using Algorithm::Subsets::getTestCases;
+        using Algorithm::Subsets::Solution;
 
         Solution solution;
-        for (const auto &testCase : getTestCases()) {
-            auto result = solution.numSquares(testCase.n);
-            std::cout << "Result: " << result << ", " << "Expected: " << testCase.expected << "\n";
-            assert((result == testCase.expected));
+        for (auto &testCase : getTestCases()) {
+            auto subsets = solution.subsets(testCase.nums);
+            for (auto &subset : subsets) {
+                std::sort(subset.begin(), subset.end());
+            }
+
+            std::sort(subsets.begin(), subsets.end(), [](const std::vector<int> &subsetA, const std::vector<int> &subsetB) -> bool {
+                return subsetA < subsetB;
+            });
+
+            auto expectedSubsets = testCase.subsets;
+            for (auto &subset : expectedSubsets) {
+                std::sort(subset.begin(), subset.end());
+            }
+
+            std::sort(expectedSubsets.begin(), expectedSubsets.end(), [](const std::vector<int> &a, const std::vector<int> &b) -> bool {
+                return a < b;
+            });
+
+            assert((subsets == expectedSubsets));
         }
     }
 
