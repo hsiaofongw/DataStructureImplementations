@@ -25,8 +25,17 @@
 #include "Algorithms/Fibonacci.hpp"
 #include "Utils/PrintTable.hpp"
 #include "Algorithms/PerfectSquares.hpp"
+#include <array>
 
 int main() {
+
+    {
+        using Algorithm::PerfectSquare::numPerfectSquaresMemo;
+
+        numPerfectSquaresMemo();
+    }
+
+    return 0;
 
     {
         using Algorithm::PerfectSquare::getTestCases;

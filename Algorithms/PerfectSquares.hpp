@@ -8,6 +8,7 @@
 #include <cmath>
 #include <vector>
 #include <algorithm>
+#include <array>
 
 namespace Algorithm {
     namespace PerfectSquare {
@@ -39,91 +40,71 @@ namespace Algorithm {
             };
         }
 
-        class Solution {
-        public:
-            Solution( ) {
-                this->memo.resize(this->maxPrefix);
-                for (size_t i = 0; i < this->maxPrefix; ++i) {
-                    this->memo[i].resize(this->maxN+1);
-                }
-
-                for (int n = 0, h = 0; n <= this->maxN; ++n) {
-                    this->updateMemo(h, n);
-                }
+        template<int N = 10000, int M = 100>
+        consteval std::array<std::array<int, N+1>, M> numPerfectSquaresMemo() {
+            std::array<std::array<int, N+1>, M> memo;
+            for (size_t i = 0, j = 0; j <= N; ++j) {
+                memo[i][j] = j;
             }
 
-            int numSquares(int n) {
-                double n_float = n;
-                double n_squareRoot = sqrt(n_float);
-                int n_floor = floor(n_squareRoot);
-                if (n_floor > this->maxPrefix) {
-                    this->growMemoHeight(n_floor);
-                }
-
-                if (n > this->maxN) {
-                    this->growMemoWidth(n);
-                }
-
-                return this->memo[n_floor-1][n];
+            for (size_t i = 1, j = 0; i < M; ++i) {
+                memo[i][j] = 0;
             }
 
-        private:
-            int maxPrefix = 1;
-            int maxN = 1;
-            std::vector<std::vector<int>> memo;
-
-            void growMemoHeight(int newMaxPrefix) {
-                this->memo.resize(newMaxPrefix);
-                for (size_t h = 0; h < newMaxPrefix; ++h) {
-                    this->memo[h].resize(this->maxN+1);
-                }
-
-                for (int n = 0; n <= this->maxN; ++n) {
-                    for (int h = this->maxPrefix; h < newMaxPrefix; ++h) {
-                        this->updateMemo(h, n);
+            for (size_t j = 1; j <= N; ++j) {
+                for (size_t i = 1; i < M; ++i) {
+                    memo[i][j] = memo[i-1][j];
+                    int cnt = 1;
+                    int remains = j - cnt * (i+1) * (i+1);
+                    while (remains >= 0) {
+                        memo[i][j] = std::min(memo[i][j], cnt + memo[i][remains]);
+                        ++cnt;
+                        remains = j - cnt * (i+1) * (i+1);
                     }
                 }
-
-                this->maxPrefix = newMaxPrefix;
             }
 
-            void growMemoWidth(int newN) {
-                for (int h = 0; h < this->maxPrefix; ++h) {
-                    this->memo[h].resize(newN+1);
-                }
+            return memo;
+        }
 
-                for (int n = this->maxN+1; n <= newN; ++n) {
-                    for (int h = 0; h < this->maxPrefix; ++h) {
-                        this->updateMemo(h, n);
+        int numPerfectSquares(int n) {
+            double n_float = n;
+            double n_squareRoot = sqrt(n_float);
+            int n_floor = floor(n_squareRoot);
+            std::vector<std::vector<int>> memo (n_floor);
+            for (auto &row : memo) {
+                row.resize(n+1);
+            }
+
+            size_t N = n;
+            size_t M = n_floor;
+
+            for (size_t i = 0, j = 0; j <= N; ++j) {
+                memo[i][j] = j;
+            }
+
+            for (size_t i = 1, j = 0; i < M; ++i) {
+                memo[i][j] = 0;
+            }
+
+            for (size_t j = 1; j <= N; ++j) {
+                for (size_t i = 1; i < M; ++i) {
+                    int ans = memo[i-1][j];
+                    int cnt = 1;
+                    int remains = j - cnt * (i+1) * (i+1);
+                    if (remains >= 0) {
+                        int newAns = cnt + memo[i][remains];
+                        if (newAns < ans) {
+                            ans = newAns;
+                        }
                     }
-                }
 
-                this->maxN = newN;
+                    memo[i][j] = ans;
+                }
             }
 
-            void updateMemo(int h, int n) {
-                if (h == 0) {
-                    this->memo[h][n] = n;
-                    return;
-                }
-
-                if (n == 0) {
-                    this->memo[h][n] = 0;
-                    return;
-                }
-
-                int answer = this->memo[h-1][n];
-                int cnt = 1;
-                int remains = n - cnt * (h+1) * (h+1);
-                while (remains >= 0) {
-                    answer = std::min(answer, cnt + this->memo[h][remains]);
-
-                    ++cnt;
-                    remains = n - cnt * (h+1) * (h+1);
-                }
-                this->memo[h][n] = answer;
-            }
-        };
+            return memo[n_floor-1][n];
+        }
     }
 }
 
