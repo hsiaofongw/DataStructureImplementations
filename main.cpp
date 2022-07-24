@@ -21,8 +21,25 @@
 #include "Algorithms/MinEditDistance.hpp"
 #include "Algorithms/DistinctSubsequences.hpp"
 #include "Algorithms/CoinChange.hpp"
+#include "Algorithms/WordBreak.hpp"
 
 int main() {
+
+    {
+        using Algorithm::WordBreak::getTestCases;
+        using Algorithm::WordBreak::Solution;
+
+        Solution solution;
+        for (auto &testCase : getTestCases()) {
+            bool result = solution.wordBreak(testCase.s, testCase.wordDict);
+            bool expected = testCase.expected;
+            std::cout << "Result: " << std::boolalpha << result
+                << ", Expected: " << std::boolalpha << expected << "\n";
+            assert((result == expected));
+        }
+    }
+
+    return 0;
 
     {
         using Algorithm::CoinChange::getTestCases;
