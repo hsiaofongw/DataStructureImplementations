@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <unordered_map>
 
 namespace Algorithm {
     namespace CoinChange {
@@ -23,18 +24,61 @@ namespace Algorithm {
          * 如果存在这样的一组数，返回 S, 如果不存在这样的一组数满足式 (1), 返回 -1.
          */
 
-        using std::vector;
+        struct TestCase {
+            std::vector<int> coins;
+            int amount;
+            int expectedOutput;
+        };
+
+        std::vector<TestCase> getTestCases() {
+            return {
+                TestCase {
+                    .coins = { 1,2,5 },
+                    .amount = 11,
+                    .expectedOutput = 3
+                },
+                TestCase {
+                    .coins = { 2 },
+                    .amount = 3,
+                    .expectedOutput = -1
+                },
+                TestCase {
+                    .coins = { 1 },
+                    .amount = 0,
+                    .expectedOutput = 0
+                },
+                TestCase {
+                    .coins = {411,412,413,414,415,416,417,418,419,420,421,422},
+                    .amount = 9864,
+                    .expectedOutput = 24
+                }
+            };
+        }
 
         class Solution {
         public:
-            int coinChange(vector<int>& coins, int amount) {
+            int coinChange(std::vector<int>& coins, int amount) {
                 assert((!coins.empty()));
+                note.clear();
                 std::sort(coins.begin(), coins.end());
-                return coinChange(coins, amount, coins.size());
+                return coinChangeWithCache(coins, amount, coins.size());
             }
 
         private:
-            int coinChange(const std::vector<int> &coins, int amount, size_t prefix) {
+
+            std::unordered_map<int, std::unordered_map<size_t, int>> note;
+
+            int coinChangeWithCache(const std::vector<int> &coins, int amount, size_t prefix) {
+                if (note.count(amount) && note[amount].count(prefix)) {
+                    return note[amount][prefix];
+                }
+
+                int ans = doCoinChange(coins, amount, prefix);
+                note[amount][prefix] = ans;
+                return ans;
+            }
+
+            int doCoinChange(const std::vector<int> &coins, int amount, size_t prefix) {
                 if (prefix == 1) {
                     if (amount % coins[0] != 0) {
                         return -1;
@@ -45,11 +89,11 @@ namespace Algorithm {
 
                 int largestCoin = coins[prefix-1];
                 if (amount < largestCoin) {
-                    return coinChange(coins, amount, prefix-1);
+                    return coinChangeWithCache(coins, amount, prefix-1);
                 }
 
-                int choice1 = coinChange(coins, amount-largestCoin, prefix);
-                int choice2 = coinChange(coins, amount, prefix-1);
+                int choice1 = coinChangeWithCache(coins, amount-largestCoin, prefix);
+                int choice2 = coinChangeWithCache(coins, amount, prefix-1);
 
                 if (choice1 == -1 && choice2 == -1) {
                     return -1;

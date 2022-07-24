@@ -20,8 +20,23 @@
 #include "Utils/RandomInteger.h"
 #include "Algorithms/MinEditDistance.hpp"
 #include "Algorithms/DistinctSubsequences.hpp"
+#include "Algorithms/CoinChange.hpp"
 
 int main() {
+
+    {
+        using Algorithm::CoinChange::getTestCases;
+        using Algorithm::CoinChange::Solution;
+
+        for (auto &testCase : getTestCases()) {
+            Solution solution;
+            auto result = solution.coinChange(testCase.coins, testCase.amount);
+            std::cout << "Actual: " << result << ", " << "Expected: " << testCase.expectedOutput << "\n";
+            assert((result == testCase.expectedOutput));
+        }
+    }
+
+    return 0;
 
     {
         using Algorithm::SubStringSearch::KMPStringMatcher;
