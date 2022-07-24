@@ -22,8 +22,25 @@
 #include "Algorithms/DistinctSubsequences.hpp"
 #include "Algorithms/CoinChange.hpp"
 #include "Algorithms/WordBreak.hpp"
+#include "Algorithms/Fibonacci.hpp"
 
 int main() {
+
+    {
+        using Algorithm::Fibonacci::Solution;
+        Solution solution;
+        for (uint32_t n = 1; n <= 14; ++n) {
+            auto val = solution.getNth(n);
+            std::cout << "F(" << n << ") = " << val << "\n";
+        }
+
+        for (uint32_t n = 4; n <= 10; ++n) {
+            auto val = solution.getNth(n);
+            std::cout << "F(" << n << ") = " << val << "\n";
+        }
+    }
+
+    return 0;
 
     {
         using Algorithm::WordBreak::getTestCases;
