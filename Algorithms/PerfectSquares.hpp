@@ -34,7 +34,8 @@ namespace Algorithm {
             return {
                 TestCase { .n = 12, .expected = 3 },
                 TestCase { .n = 13, .expected = 2 },
-                TestCase { .n = 8328, .expected = 1 }
+                TestCase { .n = 8328, .expected = 3 },
+                TestCase { .n = 5374, .expected = 3 }
             };
         }
 
@@ -55,8 +56,12 @@ namespace Algorithm {
                 double n_float = n;
                 double n_squareRoot = sqrt(n_float);
                 int n_floor = floor(n_squareRoot);
-                if (n_floor > this->maxPrefix || n > this->maxN) {
-                    this->growMemo(std::max(n_floor, this->maxPrefix), std::max(n, this->maxN));
+                if (n_floor > this->maxPrefix) {
+                    this->growMemoHeight(n_floor);
+                }
+
+                if (n > this->maxN) {
+                    this->growMemoWidth(n);
                 }
 
                 return this->memo[n_floor-1][n];
@@ -67,10 +72,10 @@ namespace Algorithm {
             int maxN = 1;
             std::vector<std::vector<int>> memo;
 
-            void growMemo(int newMaxPrefix, int newN) {
+            void growMemoHeight(int newMaxPrefix) {
                 this->memo.resize(newMaxPrefix);
                 for (size_t h = 0; h < newMaxPrefix; ++h) {
-                    this->memo[h].resize(newN+1);
+                    this->memo[h].resize(this->maxN+1);
                 }
 
                 for (int n = 0; n <= this->maxN; ++n) {
@@ -80,6 +85,12 @@ namespace Algorithm {
                 }
 
                 this->maxPrefix = newMaxPrefix;
+            }
+
+            void growMemoWidth(int newN) {
+                for (int h = 0; h < this->maxPrefix; ++h) {
+                    this->memo[h].resize(newN+1);
+                }
 
                 for (int n = this->maxN+1; n <= newN; ++n) {
                     for (int h = 0; h < this->maxPrefix; ++h) {
