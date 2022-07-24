@@ -23,8 +23,23 @@
 #include "Algorithms/CoinChange.hpp"
 #include "Algorithms/WordBreak.hpp"
 #include "Algorithms/Fibonacci.hpp"
+#include "Utils/PrintTable.hpp"
 
 int main() {
+
+    {
+        std::vector<int64_t> index { 11, 1234, 151 };
+        std::vector<int64_t> header { 161, 1, 2, 4 };
+        std::vector<std::vector<int64_t>> cells = {
+            { 1, 2, 3, 4 },
+            { 5, 6, 7, 89999 },
+            { 110, 11, 13, 14 }
+        };
+
+        Utils::PrintTable(index, header, cells);
+    }
+
+    return 0;
 
     {
         using Algorithm::Fibonacci::Solution;

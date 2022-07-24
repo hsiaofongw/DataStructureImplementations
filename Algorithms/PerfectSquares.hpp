@@ -25,6 +25,18 @@ namespace Algorithm {
          * 提示，n_i, i=1,2,...,M 中可以有重复的，并且这样的一组数都是存在的。
          */
 
+        struct TestCase {
+            int n;
+            int expected;
+        };
+
+        std::vector<TestCase> getTestCases() {
+            return {
+                TestCase { .n = 12, .expected = 3 },
+                TestCase { .n = 13, .expected = 2 }
+            };
+        }
+
         class Solution {
         public:
             Solution( ) {
