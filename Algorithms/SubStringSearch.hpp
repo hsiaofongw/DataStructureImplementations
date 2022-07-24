@@ -7,7 +7,7 @@
 
 #include <memory>
 #include <string>
-#include <set>
+#include <unordered_set>
 #include <cctype>
 #include <vector>
 #include <algorithm>
@@ -46,7 +46,7 @@ namespace Algorithm {
              */
             explicit KMPStringMatcher(std::string _pattern) : pattern(std::move(_pattern)), dfa() {
                 // Implement how to compute the DFA table in KMP algorithm
-                std::set<char> patternChars {};
+                std::unordered_set<char> patternChars {};
                 for (const auto& patternChar : pattern) {
                     patternChars.insert(patternChar);
                 }
