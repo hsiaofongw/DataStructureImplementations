@@ -24,6 +24,21 @@
 int main() {
 
     {
+        using Algorithm::SubStringSearch::KMPStringMatcher;
+        using Algorithm::SubStringSearch::getTestCases;
+
+        for (const auto &testCase : getTestCases()) {
+            KMPStringMatcher matcher (testCase.pattern);
+            auto result = matcher.search(testCase.text);
+            std::cout << "Found idx: " << result << ", "
+                << "Expected at: " << testCase.expectedAt << "\n";
+            assert((result == testCase.expectedAt));
+        }
+    }
+
+    return 0;
+
+    {
         using Algorithm::DistinctSubsequences::getTestCases;
         using Algorithm::DistinctSubsequences::numDistinct;
 
