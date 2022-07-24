@@ -33,7 +33,8 @@ namespace Algorithm {
         std::vector<TestCase> getTestCases() {
             return {
                 TestCase { .n = 12, .expected = 3 },
-                TestCase { .n = 13, .expected = 2 }
+                TestCase { .n = 13, .expected = 2 },
+                TestCase { .n = 8328, .expected = 1 }
             };
         }
 
