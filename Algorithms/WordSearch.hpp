@@ -66,6 +66,11 @@ namespace Algorithm::WordSearch {
         std::vector<TestCase> getTestCases() {
             return {
                     TestCase {
+                            .matrix = {{'a','a','b','a','a','b'},{'a','a','b','b','b','a'},{'a','a','a','a','b','a'},{'b','a','b','b','a','b'},{'a','b','b','a','b','a'},{'b','a','a','a','a','b'}},
+                            .word = "bbbaabbbbbab",
+                            .expectedOutput = true
+                    },
+                    TestCase {
                             .matrix = {{'a','b'},{'c','d'}},
                             .word = "cdba",
                             .expectedOutput = true
@@ -126,10 +131,9 @@ namespace Algorithm::WordSearch {
                     // std::cout << "i: " << i << "j: " << j << "\n";
                     std::unordered_set<size_t> traversed;
                     std::deque<Point> candidates;
-                    std::stack<size_t> dfaStates;
-                    dfaStates.push(0);
-                    // std::cout << "Start\n";
-                    if (dfs(Point {i,j}, traversed, dfaStates, M, N, dfa, matrix, word.size())) {
+                    size_t dfaState = 0;
+                    std::cout << "Start\n";
+                    if (dfs(Point {i,j}, traversed, dfaState, M, N, dfa, matrix, word.size())) {
                         return true;
                     }
                 }
@@ -147,7 +151,7 @@ namespace Algorithm::WordSearch {
         bool dfs(
             Point p,
             std::unordered_set<size_t> &traversed,
-            std::stack<size_t> &dfaStates,
+            size_t dfaState,
             const size_t &M,
             const size_t &N,
             std::vector<std::unordered_map<char, size_t>> &dfa,
@@ -156,38 +160,35 @@ namespace Algorithm::WordSearch {
         ) {
             traversed.insert(p.rowIdx*M+p.colIdx);
             char c = matrix[p.rowIdx][p.colIdx];
-            size_t prevState = dfaStates.top();
-            size_t currentState = dfa[prevState][c];
-            dfaStates.push(currentState);
+            size_t currentState = dfa[dfaState][c];
 
-            // std::cout << "(" << p.rowIdx << ", " << p.colIdx << ") " << matrix[p.rowIdx][p.colIdx] << " " << prevState << " -> " << currentState << "\n";
+            std::cout << "(" << p.rowIdx << ", " << p.colIdx << ") " << matrix[p.rowIdx][p.colIdx] << " " << dfaState << " -> " << currentState << "\n";
 
             if (currentState == wordSize) {
                 return true;
             }
 
             if (p.colIdx < M-1 && traversed.count(p.rowIdx*M+p.colIdx+1) == 0) {
-                if (dfs(Point { p.rowIdx, p.colIdx+1}, traversed, dfaStates, M, N, dfa, matrix, wordSize)) {
+                if (dfs(Point { p.rowIdx, p.colIdx+1}, traversed, dfaState, M, N, dfa, matrix, wordSize)) {
                     return true;
                 }
             }
             if (p.rowIdx < N-1 && traversed.count((p.rowIdx+1)*M+p.colIdx) == 0) {
-                if (dfs(Point { p.rowIdx+1, p.colIdx}, traversed, dfaStates, M, N, dfa, matrix, wordSize)) {
+                if (dfs(Point { p.rowIdx+1, p.colIdx}, traversed, dfaState, M, N, dfa, matrix, wordSize)) {
                     return true;
                 }
             }
             if (p.colIdx > 0 && traversed.count(p.rowIdx*M+p.colIdx-1) == 0) {
-                if (dfs(Point { p.rowIdx, p.colIdx - 1}, traversed, dfaStates, M, N, dfa, matrix, wordSize)) {
+                if (dfs(Point { p.rowIdx, p.colIdx - 1}, traversed, dfaState, M, N, dfa, matrix, wordSize)) {
                     return true;
                 }
             }
             if (p.rowIdx > 0 && traversed.count((p.rowIdx-1)*M+p.colIdx) == 0) {
-                if (dfs(Point { p.rowIdx-1, p.colIdx}, traversed, dfaStates, M, N, dfa, matrix, wordSize)) {
+                if (dfs(Point { p.rowIdx-1, p.colIdx}, traversed, dfaState, M, N, dfa, matrix, wordSize)) {
                     return true;
                 }
             }
 
-            dfaStates.pop();
             traversed.erase(p.rowIdx*M+p.colIdx);
             return false;
         }
