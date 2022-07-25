@@ -30,8 +30,24 @@
 #include <algorithm>
 #include "Algorithms/IsSubSequence.hpp"
 #include "Algorithms/WordSearch.hpp"
+#include "SystemDesign/MeetingScheduler.hpp"
 
 int main() {
+    {
+        using SystemDesign::MeetingScheduler::Scheduler;
+        Scheduler scheduler;
+        auto meeting1 = scheduler.scheduleMeeting(2);
+        scheduler.printSlots();
+        auto meeting2 = scheduler.scheduleMeeting(4);
+        scheduler.printSlots();
+
+        if (meeting1) {
+            scheduler.cancel(*meeting1);
+            scheduler.printSlots();
+        }
+    }
+
+    return 0;
 
     {
         using Algorithm::WordSearch::Solution;
