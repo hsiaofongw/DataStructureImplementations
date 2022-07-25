@@ -65,6 +65,21 @@ namespace Algorithm::WordSearch {
 
         std::vector<TestCase> getTestCases() {
             return {
+                    TestCase {
+                            .matrix = {{'a','b'},{'c','d'}},
+                            .word = "cdba",
+                            .expectedOutput = true
+                    },
+                    TestCase{
+                        .matrix = {
+                                {'a', 'b', 'c', 'e'},
+                                {'s', 'f', 'c', 's'},
+                                {'a', 'd', 'e', 'e'}
+                        },
+                        .word = "abcb",
+                        .expectedOutput = false
+                    },
+
                     TestCase{
                             .matrix = {
                                     {'a', 'b', 'c', 'e'},
@@ -82,15 +97,6 @@ namespace Algorithm::WordSearch {
                             },
                             .word = "see",
                             .expectedOutput = true
-                    },
-                    TestCase{
-                            .matrix = {
-                                    {'a', 'b', 'c', 'e'},
-                                    {'s', 'f', 'c', 's'},
-                                    {'a', 'd', 'e', 'e'}
-                            },
-                            .word = "abcb",
-                            .expectedOutput = false
                     }
             };
         }
@@ -111,41 +117,20 @@ namespace Algorithm::WordSearch {
                 prev = dfa[prev][word[curr]];
             }
 
+
             size_t N = matrix.size();
             assert((N >= 1));
             size_t M = matrix[0].size();
             for (size_t i = 0; i < N; ++i) {
                 for (size_t j = 0; j < M; ++j) {
-                    std::cout << "Start\n";
-                    size_t dfaState = 0;
-                    std::unordered_map<size_t, std::unordered_set<size_t>> traversed;
+                    // std::cout << "i: " << i << "j: " << j << "\n";
+                    std::unordered_set<size_t> traversed;
                     std::deque<Point> candidates;
-                    candidates.emplace_front(i, j);
-                    while (!candidates.empty()) {
-                        Point p = candidates.front();
-                        candidates.pop_front();
-                        traversed[p.rowIdx].insert(p.colIdx);
-
-                        dfaState = dfa[dfaState][matrix[p.rowIdx][p.colIdx]];
-
-                        // std::cout << "(" << p.rowIdx << ", " << p.colIdx << ") " << dfaState << "\n";
-
-                        if (dfaState == word.size()) {
-                            return true;
-                        }
-
-                        if (p.colIdx < M-1)
-                            if (!(traversed[p.rowIdx].count(p.colIdx+1)))
-                                candidates.emplace_front(p.rowIdx, p.colIdx+1);
-                        if (p.rowIdx < N-1)
-                            if (!(traversed[p.rowIdx+1].count(p.colIdx)))
-                                candidates.emplace_front(p.rowIdx+1, p.colIdx);
-                        if (p.rowIdx > 0)
-                            if (!(traversed[p.rowIdx-1].count(p.colIdx)))
-                                candidates.emplace_front(p.rowIdx-1, p.colIdx);
-                        if (p.colIdx > 0)
-                            if (!(traversed[p.rowIdx].count(p.colIdx-1)))
-                                candidates.emplace_front(p.rowIdx, p.colIdx-1);
+                    std::stack<size_t> dfaStates;
+                    dfaStates.push(0);
+                    // std::cout << "Start\n";
+                    if (dfs(Point {i,j}, traversed, dfaStates, M, N, dfa, matrix, word.size())) {
+                        return true;
                     }
                 }
             }
@@ -158,6 +143,54 @@ namespace Algorithm::WordSearch {
             size_t rowIdx;
             size_t colIdx;
         };
+
+        bool dfs(
+            Point p,
+            std::unordered_set<size_t> &traversed,
+            std::stack<size_t> &dfaStates,
+            const size_t &M,
+            const size_t &N,
+            std::vector<std::unordered_map<char, size_t>> &dfa,
+            const std::vector<std::vector<char>> &matrix,
+            const size_t &wordSize
+        ) {
+            traversed.insert(p.rowIdx*M+p.colIdx);
+            char c = matrix[p.rowIdx][p.colIdx];
+            size_t prevState = dfaStates.top();
+            size_t currentState = dfa[prevState][c];
+            dfaStates.push(currentState);
+
+            // std::cout << "(" << p.rowIdx << ", " << p.colIdx << ") " << matrix[p.rowIdx][p.colIdx] << " " << prevState << " -> " << currentState << "\n";
+
+            if (currentState == wordSize) {
+                return true;
+            }
+
+            if (p.colIdx < M-1 && traversed.count(p.rowIdx*M+p.colIdx+1) == 0) {
+                if (dfs(Point { p.rowIdx, p.colIdx+1}, traversed, dfaStates, M, N, dfa, matrix, wordSize)) {
+                    return true;
+                }
+            }
+            if (p.rowIdx < N-1 && traversed.count((p.rowIdx+1)*M+p.colIdx) == 0) {
+                if (dfs(Point { p.rowIdx+1, p.colIdx}, traversed, dfaStates, M, N, dfa, matrix, wordSize)) {
+                    return true;
+                }
+            }
+            if (p.colIdx > 0 && traversed.count(p.rowIdx*M+p.colIdx-1) == 0) {
+                if (dfs(Point { p.rowIdx, p.colIdx - 1}, traversed, dfaStates, M, N, dfa, matrix, wordSize)) {
+                    return true;
+                }
+            }
+            if (p.rowIdx > 0 && traversed.count((p.rowIdx-1)*M+p.colIdx) == 0) {
+                if (dfs(Point { p.rowIdx-1, p.colIdx}, traversed, dfaStates, M, N, dfa, matrix, wordSize)) {
+                    return true;
+                }
+            }
+
+            dfaStates.pop();
+            traversed.erase(p.rowIdx*M+p.colIdx);
+            return false;
+        }
     };
 }
 
