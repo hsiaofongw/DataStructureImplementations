@@ -68,7 +68,7 @@ namespace Algorithm::WordSearch {
                     TestCase {
                             .matrix = {{'a','a','b','a','a','b'},{'a','a','b','b','b','a'},{'a','a','a','a','b','a'},{'b','a','b','b','a','b'},{'a','b','b','a','b','a'},{'b','a','a','a','a','b'}},
                             .word = "bbbaabbbbbab",
-                            .expectedOutput = true
+                            .expectedOutput = false
                     },
                     TestCase {
                             .matrix = {{'a','b'},{'c','d'}},
@@ -131,9 +131,8 @@ namespace Algorithm::WordSearch {
                     // std::cout << "i: " << i << "j: " << j << "\n";
                     std::unordered_set<size_t> traversed;
                     std::deque<Point> candidates;
-                    size_t dfaState = 0;
                     std::cout << "Start\n";
-                    if (dfs(Point {i,j}, traversed, dfaState, M, N, dfa, matrix, word.size())) {
+                    if (dfs(Point {i,j}, traversed, 0, M, N, dfa, matrix, word)) {
                         return true;
                     }
                 }
@@ -156,35 +155,39 @@ namespace Algorithm::WordSearch {
             const size_t &N,
             std::vector<std::unordered_map<char, size_t>> &dfa,
             const std::vector<std::vector<char>> &matrix,
-            const size_t &wordSize
+            const std::string &word
         ) {
-            traversed.insert(p.rowIdx*M+p.colIdx);
             char c = matrix[p.rowIdx][p.colIdx];
+            if (word[dfaState] != c) {
+                return false;
+            }
+
+            traversed.insert(p.rowIdx*M+p.colIdx);
             size_t currentState = dfa[dfaState][c];
 
             std::cout << "(" << p.rowIdx << ", " << p.colIdx << ") " << matrix[p.rowIdx][p.colIdx] << " " << dfaState << " -> " << currentState << "\n";
 
-            if (currentState == wordSize) {
+            if (currentState == word.size()) {
                 return true;
             }
 
             if (p.colIdx < M-1 && traversed.count(p.rowIdx*M+p.colIdx+1) == 0) {
-                if (dfs(Point { p.rowIdx, p.colIdx+1}, traversed, dfaState, M, N, dfa, matrix, wordSize)) {
+                if (dfs(Point { p.rowIdx, p.colIdx+1}, traversed, currentState, M, N, dfa, matrix, word)) {
                     return true;
                 }
             }
             if (p.rowIdx < N-1 && traversed.count((p.rowIdx+1)*M+p.colIdx) == 0) {
-                if (dfs(Point { p.rowIdx+1, p.colIdx}, traversed, dfaState, M, N, dfa, matrix, wordSize)) {
+                if (dfs(Point { p.rowIdx+1, p.colIdx}, traversed, currentState, M, N, dfa, matrix, word)) {
                     return true;
                 }
             }
             if (p.colIdx > 0 && traversed.count(p.rowIdx*M+p.colIdx-1) == 0) {
-                if (dfs(Point { p.rowIdx, p.colIdx - 1}, traversed, dfaState, M, N, dfa, matrix, wordSize)) {
+                if (dfs(Point { p.rowIdx, p.colIdx - 1}, traversed, currentState, M, N, dfa, matrix, word)) {
                     return true;
                 }
             }
             if (p.rowIdx > 0 && traversed.count((p.rowIdx-1)*M+p.colIdx) == 0) {
-                if (dfs(Point { p.rowIdx-1, p.colIdx}, traversed, dfaState, M, N, dfa, matrix, wordSize)) {
+                if (dfs(Point { p.rowIdx-1, p.colIdx}, traversed, currentState, M, N, dfa, matrix, word)) {
                     return true;
                 }
             }
