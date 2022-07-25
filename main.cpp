@@ -28,8 +28,23 @@
 #include <array>
 #include "Algorithms/Subsets.hpp"
 #include <algorithm>
+#include "Algorithms/IsSubSequence.hpp"
 
 int main() {
+
+    {
+        using Algorithm::IsSubSequence::getTestCases;
+        using Algorithm::IsSubSequence::Solution;
+
+        Solution solution;
+        for (auto &testCase : getTestCases()) {
+            auto output = solution.isSubsequence(testCase.subSequence, testCase.text);
+            std::cout << "Actual: " << std::boolalpha << output << ", Expected: " << std::boolalpha << testCase.expectedOutput << "\n";
+            assert((output == testCase.expectedOutput));
+        }
+    }
+
+    return 0;
 
     {
         using Algorithm::Subsets::getTestCases;
