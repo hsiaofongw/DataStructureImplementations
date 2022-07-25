@@ -66,6 +66,11 @@ namespace Algorithm::WordSearch {
         std::vector<TestCase> getTestCases() {
             return {
                     TestCase {
+                        .matrix = {{'A','A','A','A','A','A'},{'A','A','A','A','A','A'},{'A','A','A','A','A','A'},{'A','A','A','A','A','A'},{'A','A','A','A','A','A'},{'A','A','A','A','A','A'}},
+                        .word = "AAAAAAAAAAAABAA",
+                        .expectedOutput = false
+                    },
+                    TestCase {
                             .matrix = {{'a','a','b','a','a','b'},{'a','a','b','b','b','a'},{'a','a','a','a','b','a'},{'b','a','b','b','a','b'},{'a','b','b','a','b','a'},{'b','a','a','a','a','b'}},
                             .word = "bbbaabbbbbab",
                             .expectedOutput = false
@@ -131,7 +136,7 @@ namespace Algorithm::WordSearch {
                     // std::cout << "i: " << i << "j: " << j << "\n";
                     std::unordered_set<size_t> traversed;
                     std::deque<Point> candidates;
-                    std::cout << "Start\n";
+                    // std::cout << "Start\n";
                     if (dfs(Point {i,j}, traversed, 0, M, N, dfa, matrix, word)) {
                         return true;
                     }
@@ -165,7 +170,7 @@ namespace Algorithm::WordSearch {
             traversed.insert(p.rowIdx*M+p.colIdx);
             size_t currentState = dfa[dfaState][c];
 
-            std::cout << "(" << p.rowIdx << ", " << p.colIdx << ") " << matrix[p.rowIdx][p.colIdx] << " " << dfaState << " -> " << currentState << "\n";
+            // std::cout << "(" << p.rowIdx << ", " << p.colIdx << ") " << matrix[p.rowIdx][p.colIdx] << " " << dfaState << " -> " << currentState << "\n";
 
             if (currentState == word.size()) {
                 return true;
