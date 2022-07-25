@@ -29,8 +29,21 @@
 #include "Algorithms/Subsets.hpp"
 #include <algorithm>
 #include "Algorithms/IsSubSequence.hpp"
+#include "Algorithms/WordSearch.hpp"
 
 int main() {
+
+    {
+        using Algorithm::WordSearch::Solution;
+        Solution solution;
+        for (const auto &testCase : solution.getTestCases()) {
+            bool output = solution.exist(testCase.matrix, testCase.word);
+            std::cout << "Actual: " << std::boolalpha << output << ", Expected: " << std::boolalpha << testCase.expectedOutput << "\n";
+            assert((output == testCase.expectedOutput));
+        }
+    }
+
+    return 0;
 
     {
         using Algorithm::IsSubSequence::getTestCases;
