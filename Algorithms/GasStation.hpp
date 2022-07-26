@@ -6,11 +6,38 @@
 #define DATASTRUCTUREIMPLEMENTATIONS_GASSTATION_HPP
 
 #include <vector>
+#include <deque>
 
 namespace Algorithm::GasStation {
 
+    struct TestCase {
+        std::vector<int> gas;
+        std::vector<int> cost;
+        int expectedOutput;
+    };
+
+    std::vector<TestCase> getTestCases() {
+        return {
+                TestCase {
+                        .gas = { 1,2,3,4,5 },
+                        .cost = { 3,4,5,1,2 },
+                        .expectedOutput = 3
+                },
+            TestCase {
+                .gas = { 2 },
+                .cost = { 2 },
+                .expectedOutput = 0
+                },
+
+                TestCase {
+                    .gas = { 2,3,4 },
+                    .cost = { 3,4,3 },
+                    .expectedOutput = -1
+                }
+        };
+    }
+
     /**
-     * 开车🚗问题 DP 解法：
      * 小车车能够从 startIdx 开到 (startIdx+len+1)%N,
      * 取决于小车能否从 startIdx 开到 (startIdx+len)%N 并且小车的油量加上当前加油站的油量能够开到下一站。
      */
@@ -19,41 +46,48 @@ namespace Algorithm::GasStation {
         int canCompleteCircuit(std::vector<int>& gas, std::vector<int>& cost) {
             size_t N = gas.size();
             assert((N >= 1));
-            std::vector<std::vector<uint8_t>> canTravel (gas.size());
-            for (auto &row : canTravel)
-                row.resize(N+1, 0);
 
-            // canTravel[i][j]: Can travel from index i to index j ?
-            // 遍历每个起始位置
-            for (size_t startAt = 0; startAt < N; ++startAt) {
-                int tank = 0;  // 初始化小车车🚗的油箱
-                canTravel[startAt][startAt] = 1;  // 把小车车🚗放在起始位置上
-                for (size_t len = 1; len <= N; ++len) {
-                    // 开小车车🚗，一步一步地开，看能开多远
-                    size_t currentIdx = (startAt + len - 1) % N; // 当前小车车🚗在这里
-                    size_t travelToIdx = (startAt + len) % N;  // 小车车🚗接下来要去这里
-                    tank = tank + gas[currentIdx];  // 小车车🚗出发前先加满油
-                    if (canTravel[startAt][currentIdx] == 1 && tank > cost[currentIdx]) {
-                        // 如果小车车🚗能够从开始位置到达这里, 并且小车车🚗有足够的油跑到下一站
-                        // 那么标记小车车🚗能够从一开始跑到下一站
-                        canTravel[startAt][travelToIdx] = 1;
-
-                        // 并且把小车车🚗开过去
-                        tank = tank - cost[currentIdx];
-                    } else {
-                        // 否则就标记小车车🚗不能够从一开始开到下一站
-                        canTravel[startAt][travelToIdx] = 0;
-                    }
+            std::vector<int> travelLength (N, 0);
+            std::vector<int> tank (N, 0);
+            std::deque<size_t> increasedIndices;
+            int totalGas = 0;
+            int totalCost = 0;
+            for (size_t i = 0; i < N; ++i) {
+                totalGas += gas[i];
+                totalCost += cost[i];
+                if (gas[i] >= cost[i]) {
+                    travelLength[i] = 1;
+                    tank[i] = gas[i] - cost[i];
+                    increasedIndices.push_back(i);
                 }
             }
 
-            // 遍历每个起始位置
-            for (size_t startAt = 0; startAt < N; ++startAt) {
-                // 如果小车车🚗能够开一圈
-                if (canTravel[startAt][(startAt+N)%N]) {
-                    // 那么就返回这个能支持小车车🚗开一圈的起始位置
+            if (totalCost > totalGas) {
+                return -1;
+            }
+
+            while (!increasedIndices.empty()) {
+                size_t startAt = increasedIndices.front();
+
+                if (increasedIndices.size() == 1) {
                     return static_cast<int>(startAt);
                 }
+
+                increasedIndices.pop_front();
+
+                size_t terminal = (startAt + travelLength[startAt])%N;
+                if (travelLength[terminal] > 0) {
+                    travelLength[startAt] += travelLength[terminal];
+                    increasedIndices.push_back(startAt);
+                    tank[startAt] += tank[terminal];
+                } else if (tank[startAt] + gas[terminal] - cost[terminal] >= 0) {
+                    travelLength[startAt] += 1;
+                    tank[startAt] += gas[terminal] - cost[terminal];
+                    increasedIndices.push_back(startAt);
+                }
+
+                if (travelLength[startAt] == N)
+                    return static_cast<int>(startAt);
             }
 
             // 如果找不到这样的能够支持小车车开一整圈的起始位置，返回 -1

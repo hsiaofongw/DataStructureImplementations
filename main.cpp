@@ -31,8 +31,23 @@
 #include "Algorithms/IsSubSequence.hpp"
 #include "Algorithms/WordSearch.hpp"
 #include "SystemDesign/MeetingScheduler.hpp"
+#include "Algorithms/GasStation.hpp"
 
 int main() {
+    {
+        using Algorithm::GasStation::Solution;
+        using Algorithm::GasStation::getTestCases;
+
+        Solution solution;
+        for (auto &testCase : getTestCases()) {
+            auto result = solution.canCompleteCircuit(testCase.gas, testCase.cost);
+            std::cout << "Actual: " << result << ", " << "Expected: " << testCase.expectedOutput << "\n";
+            assert((result == testCase.expectedOutput));
+        }
+    }
+
+    return 0;
+
     {
         using SystemDesign::MeetingScheduler::Scheduler;
         Scheduler scheduler;
