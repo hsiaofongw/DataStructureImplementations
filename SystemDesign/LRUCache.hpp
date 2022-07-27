@@ -20,7 +20,7 @@ namespace SystemDesign::LRUCache {
             assert((capacity >= 1));
             std::vector<std::shared_ptr<DoubleLinkedList<LRUDataT>>> temp;
             for (int i = 0; i < capacity; ++i) {
-                std::shared_ptr<DoubleLinkedList<LRUDataT>> node;
+                auto node = std::make_shared<DoubleLinkedList<LRUDataT>>();
                 temp.push_back(node);
             }
 
@@ -76,6 +76,11 @@ namespace SystemDesign::LRUCache {
         }
 
         std::shared_ptr<DoubleLinkedList<LRUDataT>> renewKeyNode(std::shared_ptr<DoubleLinkedList<LRUDataT>> node) {
+            if (node == tail) {
+                tail = tail->prev;
+                return tail->next;
+            }
+
             node->prev->next = node->next;
             node->next->prev = node->prev;
 

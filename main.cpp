@@ -45,7 +45,7 @@ int main() {
         LRUCache lruCache (cacheCapacity);
 
         auto getKey = [&lruCache](int key) -> void {
-            std::cout << "get(key = " << key << "): " << lruCache.get(1) << "\n";
+            std::cout << "get(key = " << key << "): " << lruCache.get(key) << "\n";
         };
 
         lruCache.put(1, 1);
