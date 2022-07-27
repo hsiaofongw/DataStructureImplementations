@@ -32,8 +32,24 @@
 #include "Algorithms/WordSearch.hpp"
 #include "SystemDesign/MeetingScheduler.hpp"
 #include "Algorithms/GasStation.hpp"
+#include "Algorithms/MaximumSquare.hpp"
 
 int main() {
+
+    {
+        using Algorithm::MaximumSquare::Solution;
+        using Algorithm::MaximumSquare::getTestCases;
+
+        Solution solution;
+        for (auto &testCase : getTestCases()) {
+            auto result = solution.maximalSquare(testCase.matrix);
+            std::cout << "Actual: " << result << ", Expected: " << testCase.expectedOutput << "\n";
+            assert((result == testCase.expectedOutput));
+        }
+    }
+
+    return 0;
+
     {
         using Algorithm::GasStation::Solution;
         using Algorithm::GasStation::getTestCases;
