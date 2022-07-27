@@ -10,8 +10,6 @@
 
 namespace Algorithm::HappyNumber {
 
-
-
     /**
      * Happy Number 判定过程：
      *
