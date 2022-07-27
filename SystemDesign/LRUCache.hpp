@@ -49,6 +49,8 @@ namespace SystemDesign::LRUCache {
         class DoubleLinkedListManipulator {
         public:
             static std::shared_ptr<DoubleLinkedList<KeyT>> constructList(size_t size) {
+                assert((size >= 1));
+
                 auto head = std::make_shared<DoubleLinkedList<KeyT>>();
                 head->next = head;
                 head->prev = head;
