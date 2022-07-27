@@ -34,8 +34,32 @@
 #include "Algorithms/GasStation.hpp"
 #include "Algorithms/MaximumSquare.hpp"
 #include "Algorithms/SimplifyPath.hpp"
+#include "SystemDesign/LRUCache.hpp"
 
 int main() {
+
+    {
+        using SystemDesign::LRUCache::LRUCache;
+
+        constexpr int cacheCapacity = 2;
+        LRUCache lruCache (cacheCapacity);
+
+        auto getKey = [&lruCache](int key) -> void {
+            std::cout << "get(key = " << key << "): " << lruCache.get(1) << "\n";
+        };
+
+        lruCache.put(1, 1);
+        lruCache.put(2, 2);
+        getKey(1);
+        lruCache.put(3, 3);
+        getKey(2);
+        lruCache.put(4, 4);
+        getKey(1);
+        getKey(3);
+        getKey(4);
+    }
+
+    return 0;
 
     {
         using Algorithm::SimplifyPath::getTestCases;

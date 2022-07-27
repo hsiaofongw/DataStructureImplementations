@@ -13,23 +13,36 @@
 namespace SystemDesign::LRUCache {
 
     template <typename LRUCacheKeyT = int, typename LRUCacheValT = int, LRUCacheValT defaultValue = -1>
-    class LRUCache {
+    class LRUCacheGen {
     public:
 
-        explicit LRUCache(int capacity) : linkedListHandle(), addressMap() {
-            auto tail = DoubleLinkedListManipulator<LRUCacheKeyT>::constructList(static_cast<size_t>(capacity));
-            this->linkedListHandle.setTail(tail);
+        explicit LRUCacheGen(int capacity) : tail(), addressMap() {
+            assert((capacity >= 1));
+            std::vector<std::shared_ptr<DoubleLinkedList<LRUDataT>>> temp;
+            for (int i = 0; i < capacity; ++i) {
+                std::shared_ptr<DoubleLinkedList<LRUDataT>> node;
+                temp.push_back(node);
+            }
+
+            for (int i = 0; i < capacity; ++i) {
+                int prevIdx = (i+capacity-1)%capacity;
+                int nextIdx = (i+1)%capacity;
+                temp[i]->next = temp[nextIdx];
+                temp[i]->prev = temp[prevIdx];
+            }
+
+            this->tail = temp[(capacity-1)%capacity];
         }
 
         void put(LRUCacheKeyT key, LRUCacheValT val) {
             auto keyNode = renewKey(key);
-            storage[keyNode->data] = val;
+            keyNode->data.value = val;
         }
 
         LRUCacheValT get(LRUCacheKeyT key) {
             if (addressMap[key]) {
                 auto keyNode = renewKey(key);
-                return storage[keyNode->data];
+                return keyNode->data.value;
             }
 
             return defaultValue;
@@ -45,89 +58,57 @@ namespace SystemDesign::LRUCache {
             DataT data;
         };
 
-        template <typename KeyT>
-        class DoubleLinkedListManipulator {
-        public:
-            static std::shared_ptr<DoubleLinkedList<KeyT>> constructList(size_t size) {
-                assert((size >= 1));
-
-                auto head = std::make_shared<DoubleLinkedList<KeyT>>();
-                head->next = head;
-                head->prev = head;
-
-                DoubleLinkedListManipulator<KeyT> handle;
-                auto tail = head->prev;
-                handle.setTail(tail);
-                for (size_t i = 1; i < size; ++i) {
-                    auto x = std::make_shared<DoubleLinkedList<KeyT>>();
-                    handle.insertAfter(tail, x);
-                }
-
-                return tail;
-            }
-
-            void setTail(std::shared_ptr<DoubleLinkedList<KeyT>> x) {
-                this->tail = x;
-            }
-
-            std::shared_ptr<DoubleLinkedList<KeyT>> getTail() {
-                return tail;
-            }
-
-            void rotateCounterClockwise() {
-                tail = tail->prev;
-            }
-
-            void insertAfter(std::shared_ptr<DoubleLinkedList<KeyT>> position, std::shared_ptr<DoubleLinkedList<KeyT>> x) {
-                x->next = position->next;
-                x->next->prev = x;
-                position->next = x;
-                position->next->prev = position;
-            }
-
-            void insertAfterTail(std::shared_ptr<DoubleLinkedList<KeyT>> x) {
-                insertAfter(tail, x);
-            }
-
-            void detach(std::shared_ptr<DoubleLinkedList<KeyT>> x) {
-                x->prev->next = x->next;
-                x->next->prev = x->prev;
-            }
-        private:
-            std::shared_ptr<DoubleLinkedList<KeyT>> tail;
+        struct LRUDataT {
+            LRUCacheKeyT key;
+            LRUCacheValT value;
         };
 
-        DoubleLinkedListManipulator<LRUCacheKeyT> linkedListHandle;
-        std::unordered_map<LRUCacheKeyT, std::shared_ptr<DoubleLinkedList<LRUCacheKeyT>>> addressMap;
-        std::vector<LRUCacheValT> storage;
+        std::shared_ptr<DoubleLinkedList<LRUDataT>> tail;
+        std::unordered_map<LRUCacheKeyT, std::shared_ptr<DoubleLinkedList<LRUDataT>>> addressMap;
 
-        void revokeOldest() {
-            auto tail = linkedListHandle.getTail();
-            auto oldKey = tail->data;
-            addressMap[oldKey] = nullptr;
-        }
-
-        std::shared_ptr<DoubleLinkedList<LRUCacheKeyT>> assignNewKey(LRUCacheKeyT key) {
-            revokeOldest();
-            auto tail = linkedListHandle.getTail();
+        std::shared_ptr<DoubleLinkedList<LRUDataT>> assignNewKey(LRUCacheKeyT key) {
+            addressMap[tail->data.key] = nullptr;
             addressMap[key] = tail;
-            tail->data = key;
-            linkedListHandle.rotateCounterClockwise();
-            return tail->next;
+            tail->data.key = key;
+            auto keyNode = tail;
+            tail = tail->prev;
+            return keyNode;
         }
 
-        std::shared_ptr<DoubleLinkedList<LRUCacheKeyT>> renewKeyNode(std::shared_ptr<DoubleLinkedList<LRUCacheKeyT>> node) {
-            linkedListHandle.detach(node);
-            linkedListHandle.insertAfterTail(node);
+        std::shared_ptr<DoubleLinkedList<LRUDataT>> renewKeyNode(std::shared_ptr<DoubleLinkedList<LRUDataT>> node) {
+            node->prev->next = node->next;
+            node->next->prev = node->prev;
+
+            node->next = tail->next;
+            node->next->prev = node;
+            node->prev = tail;
+            node->prev->next = node;
+
             return node;
         }
 
-        std::shared_ptr<DoubleLinkedList<LRUCacheKeyT>> renewKey(LRUCacheKeyT key) {
+        std::shared_ptr<DoubleLinkedList<LRUDataT>> renewKey(LRUCacheKeyT key) {
             if (addressMap[key])
                 return renewKeyNode(addressMap[key]);
             else
                 return assignNewKey(key);
         }
+    };
+
+    class LRUCache {
+    public:
+        explicit LRUCache(int capacity) : cache(capacity) { }
+
+        int get(int key) {
+            return cache.get(key);
+        }
+
+        void put(int key, int value) {
+            cache.put(key, value);
+        }
+
+    private:
+        LRUCacheGen<int, int, -1> cache;
     };
 }
 
