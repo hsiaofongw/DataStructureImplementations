@@ -33,8 +33,25 @@
 #include "SystemDesign/MeetingScheduler.hpp"
 #include "Algorithms/GasStation.hpp"
 #include "Algorithms/MaximumSquare.hpp"
+#include "Algorithms/SimplifyPath.hpp"
 
 int main() {
+
+    {
+        using Algorithm::SimplifyPath::getTestCases;
+        using Algorithm::SimplifyPath::Solution;
+
+        Solution solution;
+        for (auto &testCase : getTestCases()) {
+            std::string actual = solution.simplifyPath(testCase.path);
+            std::cout << "Input: " << testCase.path << "\n";
+            std::cout << "Output: " << actual << "\n";
+            std::cout << "Expected: " << testCase.normalizedPath << "\n";
+            assert((actual == testCase.normalizedPath));
+        }
+    }
+
+    return 0;
 
     {
         using Algorithm::MaximumSquare::Solution;
