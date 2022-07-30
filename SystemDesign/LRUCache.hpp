@@ -10,7 +10,7 @@
 #include <unordered_map>
 #include <memory>
 
-namespace SystemDesign::LRUCache {
+namespace SystemDesign::Cache {
 
     template <typename LRUCacheKeyT = int, typename LRUCacheValT = int, LRUCacheValT defaultValue = -1>
     class LRUCacheGen {
