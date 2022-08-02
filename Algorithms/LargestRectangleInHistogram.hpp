@@ -17,40 +17,54 @@ namespace Algorithm::LargestRectangleInHistogram {
     class Solution {
     public:
         int largestRectangleArea(vector<int>& heights) {
+            if (heights.empty())
+                return 0;
+
             size_t N = heights.size();
-            vector<size_t> leftGteCount (N, 0);
-            vector<size_t> rightGteCount (N, 0);
-            for (size_t i = 1; i < N; ++i) {
-                if (heights[i] == 0) {
+            vector<size_t> distinctIndices (N);
+            vector<size_t> repeats (N);
+            size_t uniqueCount;
+            compress(heights, distinctIndices, repeats, uniqueCount);
+            vector<int> distinct;
+            for (const size_t &idx : distinctIndices)
+                distinct.push_back(heights[idx]);
+
+            vector<size_t> leftAreas (uniqueCount);
+            vector<size_t> rightAreas (uniqueCount);
+            leftAreas[0] = 0;
+            rightAreas[uniqueCount-1] = 0;
+
+            for (size_t i = 1; i < uniqueCount; ++i) {
+                if (distinct[i] == 0) {
                     continue;
                 }
                 for (size_t dj = 1; dj <= i; ++dj) {
                     size_t j = i - dj;
-                    if (heights[j] < heights[i]) {
+                    if (distinct[j] < distinct[i]) {
                         break;
                     }
-                    leftGteCount[i]++;
+                    leftAreas[i] += distinct[i] * repeats[j];
                 }
             }
 
-            for (size_t di = 1; di <= N-1; ++di) {
-                size_t i = N-1-di;
-                if (heights[i] == 0) {
+            for (size_t di = 1; di+1 <= uniqueCount; ++di) {
+                size_t i = uniqueCount-1-di;
+                if (distinct[i] == 0) {
                     continue;
                 }
-                for (size_t j = i+1; j < N; ++j) {
-                    if (heights[j] < heights[i]) {
+                for (size_t j = i+1; j < uniqueCount; ++j) {
+                    if (distinct[j] < distinct[i]) {
                         break;
                     }
-                    rightGteCount[i]++;
+                    rightAreas[i] += distinct[i] * repeats[j];
                 }
             }
 
             size_t maxArea = 0;
-            for (size_t i = 0; i < N; ++i) {
-                size_t h = heights[i];
+            for (size_t i = 0; i < uniqueCount; ++i) {
+                size_t h = distinct[i];
                 if (h != 0) {
-                    size_t area = h + h * leftGteCount[i] + h * rightGteCount[i];
+                    size_t area = h * repeats[i] + leftAreas[i] + rightAreas[i];
                     if (area > maxArea) {
                         maxArea = area;
                     }
@@ -58,6 +72,38 @@ namespace Algorithm::LargestRectangleInHistogram {
             }
 
             return static_cast<int>(maxArea);
+        }
+    private:
+        template <typename ElementT>
+        void compress(
+            const vector<ElementT> &origin,
+            vector<size_t> &distinctIndices,
+            vector<size_t> &repeats,
+            size_t &uniqueCnt
+        ) {
+            if (origin.empty()) {
+                distinctIndices.resize(0);
+                repeats.resize(0);
+                return;
+            }
+
+            const size_t N = origin.size();
+            distinctIndices[0] = 0;
+            repeats[0] = 1;
+            uniqueCnt = 1;
+            for (size_t i = 0, j = 1; j < N; ++j) {
+                if (origin[i] == origin[j]) {
+                    repeats[uniqueCnt-1]++;
+                } else {
+                    repeats[uniqueCnt] = 1;
+                    distinctIndices[uniqueCnt] = j;
+                    ++uniqueCnt;
+                    i = j;
+                }
+            }
+
+            distinctIndices.resize(uniqueCnt);
+            repeats.resize(uniqueCnt);
         }
     };
 }
