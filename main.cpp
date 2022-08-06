@@ -1,11 +1,11 @@
-#include "Algorithms/FindLargestIndexInRotatedSortedArray.hpp"
+#include "DataStructures/RotatedSortedArray.hpp"
 #include <iostream>
 
 int main() {
     {
-        using Algorithm::RotatedArray::getTestCases;
-        using Algorithm::RotatedArray::findSingularPoint;
-        using Algorithm::RotatedArray::bisectSearchInRotatedSortedArray;
+        using DataStructure::RotatedSortedArray::getTestCases;
+        using DataStructure::RotatedSortedArray::findSingularPoint;
+        using DataStructure::RotatedSortedArray::bisectSearchInRotatedSortedArray;
 
         std::vector<int> nums = { 1, 3, 5 };
         int target = 3;
