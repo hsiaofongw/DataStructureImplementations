@@ -83,8 +83,7 @@ namespace SystemDesign::Cache {
         std::unordered_map<KeyT, NodePtr> addressMap;
         std::unordered_map<size_t, std::deque<NodePtr>> useCountMap;
 
-        void invalidate(NodePtr node) {
-            addressMap[node->key] = nullptr;
+        void popNodeFromCurrentQueue(NodePtr node) {
             std::deque<NodePtr> &q = useCountMap[node->useCount];
             assert((!q.empty()));
             q.pop_back();
@@ -93,7 +92,7 @@ namespace SystemDesign::Cache {
             }
         }
 
-        void reAddressingNode(NodePtr &node) {
+        void insertNodeIntoNextQueue(NodePtr &node) {
             node->useCount++;
             std::deque<NodePtr> &q = useCountMap[node->useCount];
             q.push_front(node);
@@ -110,20 +109,22 @@ namespace SystemDesign::Cache {
         }
 
         NodePtr assignNewKey(const KeyT &key) {
-            invalidate(tail);
+            popNodeFromCurrentQueue(tail);
 
             tail->useCount = 0;
+            addressMap[tail->key] = nullptr;
             tail->key = key;
+            addressMap[key] = tail;
 
-            reAddressingNode(tail);
+            insertNodeIntoNextQueue(tail);
 
             tail = tail->prev;
             return tail->next;
         }
 
         NodePtr renewKeyNode(NodePtr node) {
-            invalidate(node);
-            reAddressingNode(node);
+            popNodeFromCurrentQueue(node);
+            insertNodeIntoNextQueue(node);
             return node;
         }
 
