@@ -43,13 +43,13 @@ namespace SystemDesign::Cache {
         void put(KeyT key, ValT val) {
             auto keyNode = renewKey(key);
             if (keyNode)
-                keyNode->data.value = val;
+                keyNode->val = val;
         }
 
         ValT get(KeyT key) {
             if (addressMap[key]) {
                 auto keyNode = renewKey(key);
-                return keyNode->data.value;
+                return keyNode->val;
             }
 
             return defaultValue;
@@ -58,7 +58,7 @@ namespace SystemDesign::Cache {
         void printLink() {
             auto _head = tail->next;
             for (size_t i = 0; i < capacity; ++i) {
-                std::cout << "(key=" << (_head->data.key) << ", " << "cnt=" << (_head->data.keyUseCount) << ") ";
+                std::cout << "(key=" << (_head->key) << ", " << "cnt=" << (_head->useCount) << ") ";
                 _head = _head->next;
             }
             std::cout << std::endl;

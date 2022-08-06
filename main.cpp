@@ -1,16 +1,7 @@
-#include "DataStructures/RotatedSortedArray.hpp"
 #include <iostream>
+#include "SystemDesign/LFUCache.hpp"
 
 int main() {
-    {
-        using DataStructure::RotatedSortedArray::getTestCases;
-        using DataStructure::RotatedSortedArray::findSingularPoint;
-        using DataStructure::RotatedSortedArray::bisectSearchInRotatedSortedArray;
-
-        std::vector<int> nums = { 1, 3, 5 };
-        int target = 3;
-        bisectSearchInRotatedSortedArray(nums, target);
-
-        return 0;
-    }
+    using LFUCache = SystemDesign::Cache::LFUCacheGen<>;
+    LFUCache lfuCache (3);
 }
