@@ -122,29 +122,31 @@ namespace SystemDesign::Cache {
             return tail->next;
         }
 
-        NodePtr renewKeyNode(NodePtr node) {
+        void renewKeyNode(NodePtr node) {
             popNodeFromCurrentQueue(node);
             insertNodeIntoNextQueue(node);
-            return node;
         }
 
-        void detach(std::shared_ptr<ListNode> node) {
+        void detach(NodePtr &node) {
             node->prev->next = node->next;
             node->next->prev = node->prev;
         }
 
-        void insertBefore(std::shared_ptr<ListNode> pos, std::shared_ptr<ListNode> node) {
+        void insertBefore(NodePtr &pos, NodePtr &node) {
             node->prev = pos->prev;
             node->next = pos;
             node->prev->next = node;
             node->next->prev = node;
         }
 
-        std::shared_ptr<ListNode> renewKey(const KeyT &key) {
-            if (addressMap[key])
-                return renewKeyNode(addressMap[key]);
-            else
-                return assignNewKey(key);
+        NodePtr renewKey(const KeyT &key) {
+            if (addressMap[key]) {
+                NodePtr node = addressMap[key];
+                renewKeyNode(node);
+                return node;
+            }
+
+            return assignNewKey(key);
         }
     };
 }
