@@ -14,14 +14,14 @@
 
 namespace SystemDesign::Cache {
 
-    template <typename LFUCacheKeyT = int, typename LFUCacheValT = int, LFUCacheValT defaultValue = -1>
+    template <typename KeyT = int, typename ValT = int, ValT defaultValue = -1>
     class LFUCacheGen {
     public:
 
         explicit LFUCacheGen(int capacity) : tail(), addressMap(), capacity(capacity), useCountMap() {
-            std::vector<std::shared_ptr<DoubleLinkedList>> temp;
+            std::vector<std::shared_ptr<ListNode>> temp;
             for (int i = 0; i < capacity; ++i) {
-                auto node = std::make_shared<DoubleLinkedList>();
+                auto node = std::make_shared<ListNode>();
                 node->useCount = 0;
                 useCountMap[0].push_back(node);
                 temp.push_back(node);
@@ -40,13 +40,13 @@ namespace SystemDesign::Cache {
             }
         }
 
-        void put(LFUCacheKeyT key, LFUCacheValT val) {
+        void put(KeyT key, ValT val) {
             auto keyNode = renewKey(key);
             if (keyNode)
                 keyNode->data.value = val;
         }
 
-        LFUCacheValT get(LFUCacheKeyT key) {
+        ValT get(KeyT key) {
             if (addressMap[key]) {
                 auto keyNode = renewKey(key);
                 return keyNode->data.value;
@@ -68,53 +68,78 @@ namespace SystemDesign::Cache {
 
         size_t capacity;
 
-        struct DoubleLinkedList {
-            DoubleLinkedList() : prev(), next(), useCount(), key(), val() { }
-            std::shared_ptr<DoubleLinkedList> prev;
-            std::shared_ptr<DoubleLinkedList> next;
+        struct ListNode {
+            ListNode() : prev(), next(), useCount(), key(), val() { }
+            std::shared_ptr<ListNode> prev;
+            std::shared_ptr<ListNode> next;
             size_t useCount;
-            LFUCacheKeyT key;
-            LFUCacheValT val;
+            KeyT key;
+            ValT val;
         };
 
-        std::shared_ptr<DoubleLinkedList> tail;
-        std::unordered_map<LFUCacheKeyT, std::shared_ptr<DoubleLinkedList>> addressMap;
-        std::unordered_map<size_t, std::deque<DoubleLinkedList>> useCountMap;
+        using NodePtr = std::shared_ptr<ListNode>;
 
-        std::shared_ptr<DoubleLinkedList> assignNewKey(LFUCacheKeyT key) {
-            if (useCountMap[0].empty()) {
-                // 没有 free 空间
-                // 那就释放一个
-                addressMap[tail->key] = nullptr;
-                tail->useCount = 0;
-                auto newTail = tail->prev;
-                detach(tail);
-                useCountMap[0].push_back(tail);
-                tail = newTail;
+        NodePtr tail;
+        std::unordered_map<KeyT, NodePtr> addressMap;
+        std::unordered_map<size_t, std::deque<NodePtr>> useCountMap;
+
+        void invalidate(NodePtr node) {
+            addressMap[node->key] = nullptr;
+            std::deque<NodePtr> &q = useCountMap[node->useCount];
+            assert((!q.empty()));
+            q.pop_back();
+            if (q.empty()) {
+                useCountMap.erase(node->useCount);
+            }
+        }
+
+        void reAddressingNode(NodePtr &node) {
+            node->useCount++;
+            std::deque<NodePtr> &q = useCountMap[node->useCount];
+            q.push_front(node);
+
+            if (node->prev == node) {
+                return;
             }
 
-            assert((!useCountMap[0].empty()));
+            if (q.size() >= 2) {
+                NodePtr mostRecent = q[1];
+                detach(node);
+                insertBefore(mostRecent, node);
+            }
+        }
 
-            std::shared_ptr<DoubleLinkedList> node = useCountMap[0].front();
-            useCountMap[0].pop_front();
-            node->key = key;
-            node->useCount = 1;
-            addressMap[key] = node;
+        NodePtr assignNewKey(const KeyT &key) {
+            invalidate(tail);
 
+            tail->useCount = 0;
+            tail->key = key;
 
+            reAddressingNode(tail);
+
+            tail = tail->prev;
+            return tail->next;
+        }
+
+        NodePtr renewKeyNode(NodePtr node) {
+            invalidate(node);
+            reAddressingNode(node);
             return node;
         }
 
-        std::shared_ptr<DoubleLinkedList> renewKeyNode(std::shared_ptr<DoubleLinkedList> node) {
-
-        }
-
-        void detach(std::shared_ptr<DoubleLinkedList> node) {
+        void detach(std::shared_ptr<ListNode> node) {
             node->prev->next = node->next;
             node->next->prev = node->prev;
         }
 
-        std::shared_ptr<DoubleLinkedList> renewKey(LFUCacheKeyT key) {
+        void insertBefore(std::shared_ptr<ListNode> pos, std::shared_ptr<ListNode> node) {
+            node->prev = pos->prev;
+            node->next = pos;
+            node->prev->next = node;
+            node->next->prev = node;
+        }
+
+        std::shared_ptr<ListNode> renewKey(const KeyT &key) {
             if (addressMap[key])
                 return renewKeyNode(addressMap[key]);
             else
