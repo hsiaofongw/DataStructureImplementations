@@ -71,14 +71,8 @@ namespace SystemDesign::Cache {
         std::unordered_map<KeyT, NodePtr> addressMap;
         std::unordered_map<size_t, NodePtr> pools;
 
-        void renewKeyNode(NodePtr node) {
-            // 首先找到这个 node 是在哪个池子
-            NodePtr pool = pools[node->useCount];
-
-            // 这个池子一定是非空的，因为至少有 node 这一个节点
-            assert((!!pool));
-
-            // 把 node 从池子取出
+        /** 把 node 从池子取出 */
+        void extractNodeFromPools(NodePtr node) {
             if (node->pool.prev == node) {
                 // 池子中只有 node 这一个
                 pools[node->useCount] = nullptr;
@@ -94,46 +88,90 @@ namespace SystemDesign::Cache {
                 prev->pool.next = next;
                 next->pool.prev = prev;
             }
+        }
 
-            // 把 node 放到下一个池子的顶部，
-            // 首先，定位到下一个池子。
+        /** 更新 node 在队列中的位置 */
+        void queueInsertAt(NodePtr node, NodePtr queuePrev, NodePtr queueNext) {
+            (node->queue.prev)->queue.next = node->queue.next;
+            (node->queue.next)->queue.prev = node->queue.prev;
+            node->queue.next = queueNext;
+            node->queue.prev = queuePrev;
+            queuePrev->queue.next = node;
+            queueNext->queue.prev = node;
+        }
+
+        /** 更新 node 在池子中的位置 */
+        void poolInsertAt(NodePtr node, NodePtr poolPrev, NodePtr poolNext) {
+            // 把 node 从池子里取出
+            extractNodeFromPools(node);
+
+            // 在新的位置建立链接
+            node->pool.next = poolNext;
+            node->pool.prev = poolPrev;
+            poolPrev->pool.next = node;
+            poolNext->pool.prev = node;
+        }
+
+        void moveForward(NodePtr node) {
+            NodePtr tailRepl = tail->queue.prev;
             node->useCount++;
-            // 然后，分两种情况：
-            if (pools[node->useCount]) {
-                // 一种情况是：下一个池子是非空的，
-                // 则让它作为这个池子的，新的首节点。
-                NodePtr poolHead = pools[node->useCount];
-                NodePtr poolTail = poolHead->pool.prev;
-                node->pool.prev = poolTail;
-                node->pool.next = poolHead;
-                poolTail->pool.next = node;
-                poolHead->pool.prev = node;
-                pools[node->useCount] = node;
 
-                // 更新 node 在 queue 中的位置
-                NodePtr queueNext = node->pool.next;
-                NodePtr queuePrev = queueNext->queue.prev;
-                node->queue.prev = queuePrev;
-                node->queue.next = queueNext;
-                queueNext->queue.prev = node;
-                queuePrev->queue.next = node;
-            } else {
-                // 另外一种情况：下一个池子是空的。
-                // 这时直接赋值就行了。
-                pools[node->useCount] = node;
+            NodePtr poolHead = pools[node->useCount];
+            NodePtr queuePrev = poolHead->queue.prev;
+            queueInsertAt(node, queuePrev, poolHead);
 
-                // 但是注意要让它自指成环，因为我们需要利用环的一些性质。
-                node->pool.next = node;
-                node->pool.prev = node;
-
-                // 更新 node 在 queue 中的位置
-                NodePtr oldPoolHead = pool;
-                NodePtr prevNodeInQueue = oldPoolHead->queue.prev;
-                node->queue.prev = prevNodeInQueue;
-                node->queue.next = oldPoolHead;
-                prevNodeInQueue->queue.next = node;
-                oldPoolHead->queue.prev = node;
+            NodePtr prevNode = node->queue.prev;
+            if (node->useCount > prevNode->useCount) {
+                if (pools[node->useCount]) {
+                    poolHead = pools[node->useCount];
+                } else {
+                    poolHead = pools[(node->queue.prev)->useCount];
+                }
+                queueInsertAt(node, poolHead->queue.prev, poolHead);
             }
+
+            if (node == tail) {
+                tail = tailRepl;
+            }
+        }
+
+        void poolInsertByIndex(NodePtr node, size_t poolIdx) {
+            if (pools[poolIdx]) {
+                NodePtr poolHead = pools[poolIdx];
+                NodePtr poolTail = poolHead->pool.prev;
+                poolInsertAt(node, poolTail, poolHead);
+                pools[poolIdx] = node;
+            } else {
+                extractNodeFromPools(node);
+                pools[poolIdx] = node;
+                node->pool.prev = node;
+                node->pool.next = node;
+            }
+        }
+
+        void renewKeyNode(NodePtr node) {
+            moveForward(node);
+            poolInsertByIndex(node, node->useCount);
+        }
+
+        NodePtr assignNewKeyNode(const KeyT &key) {
+            NodePtr node = tail;
+            addressMap[node->key] = nullptr;
+            addressMap[key] = node;
+            node->key = key;
+            node->useCount = 0;
+            renewKeyNode(node);
+            return node;
+        }
+
+        NodePtr renewKey(const KeyT &key) {
+            if (addressMap[key]) {
+                NodePtr node = addressMap[key];
+                renewKeyNode(node);
+                return node;
+            }
+
+            return assignNewKeyNode(key);
         }
     };
 }
