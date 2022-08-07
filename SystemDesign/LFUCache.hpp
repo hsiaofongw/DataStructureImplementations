@@ -18,26 +18,8 @@ namespace SystemDesign::Cache {
     class LFUCacheGen {
     public:
 
-        explicit LFUCacheGen(int capacity) : tail(), addressMap(), capacity(capacity), useCountMap() {
-            std::vector<std::shared_ptr<ListNode>> temp;
-            for (int i = 0; i < capacity; ++i) {
-                auto node = std::make_shared<ListNode>();
-                node->useCount = 0;
-                useCountMap[0].push_back(node);
-                temp.push_back(node);
-            }
+        explicit LFUCacheGen(int capacity) : tail(), addressMap(), capacity(capacity), pools() {
 
-            for (int i = 1; i < capacity; ++i) {
-                int prevIdx = i-1;
-                temp[i]->prev = temp[prevIdx];
-                temp[i]->prev->next = temp[i];
-            }
-
-            if (!temp.empty()) {
-                temp[0]->prev = temp[capacity-1];
-                tail = temp[0]->prev;
-                tail->next = temp[0];
-            }
         }
 
         void put(KeyT key, ValT val) {
@@ -68,85 +50,90 @@ namespace SystemDesign::Cache {
 
         size_t capacity;
 
+        struct ListNode;
+        using NodePtr = std::shared_ptr<ListNode>;
+
+        struct Link {
+            NodePtr prev;
+            NodePtr next;
+        };
+
         struct ListNode {
-            ListNode() : prev(), next(), useCount(), key(), val() { }
-            std::shared_ptr<ListNode> prev;
-            std::shared_ptr<ListNode> next;
+            ListNode() : pool(), queue(), useCount(), key(), val() { }
+            Link pool;
+            Link queue;
             size_t useCount;
             KeyT key;
             ValT val;
         };
 
-        using NodePtr = std::shared_ptr<ListNode>;
-
         NodePtr tail;
         std::unordered_map<KeyT, NodePtr> addressMap;
-        std::unordered_map<size_t, std::deque<NodePtr>> useCountMap;
-
-        void popNodeFromCurrentQueue(NodePtr node) {
-            std::deque<NodePtr> &q = useCountMap[node->useCount];
-            assert((!q.empty()));
-            q.pop_back();
-            if (q.empty()) {
-                useCountMap.erase(node->useCount);
-            }
-        }
-
-        void insertNodeIntoNextQueue(NodePtr &node) {
-            node->useCount++;
-            std::deque<NodePtr> &q = useCountMap[node->useCount];
-            q.push_front(node);
-
-            if (node->prev == node) {
-                return;
-            }
-
-            if (q.size() >= 2) {
-                NodePtr mostRecent = q[1];
-                detach(node);
-                insertBefore(mostRecent, node);
-            }
-        }
-
-        NodePtr assignNewKey(const KeyT &key) {
-            popNodeFromCurrentQueue(tail);
-
-            tail->useCount = 0;
-            addressMap[tail->key] = nullptr;
-            tail->key = key;
-            addressMap[key] = tail;
-
-            insertNodeIntoNextQueue(tail);
-
-            tail = tail->prev;
-            return tail->next;
-        }
+        std::unordered_map<size_t, NodePtr> pools;
 
         void renewKeyNode(NodePtr node) {
-            popNodeFromCurrentQueue(node);
-            insertNodeIntoNextQueue(node);
-        }
+            // 首先找到这个 node 是在哪个池子
+            NodePtr pool = pools[node->useCount];
 
-        void detach(NodePtr &node) {
-            node->prev->next = node->next;
-            node->next->prev = node->prev;
-        }
+            // 这个池子一定是非空的，因为至少有 node 这一个节点
+            assert((!!pool));
 
-        void insertBefore(NodePtr &pos, NodePtr &node) {
-            node->prev = pos->prev;
-            node->next = pos;
-            node->prev->next = node;
-            node->next->prev = node;
-        }
+            // 把 node 从池子取出
+            if (node->pool.prev == node) {
+                // 池子中只有 node 这一个
+                pools[node->useCount] = nullptr;
 
-        NodePtr renewKey(const KeyT &key) {
-            if (addressMap[key]) {
-                NodePtr node = addressMap[key];
-                renewKeyNode(node);
-                return node;
+                // 现在池子空了，pools 是一个字典，也最好把对应的键值对释放掉，否则，
+                // 长此以往 unordered_map 的性能会因为有大量废弃不用的键值对而下降。
+                pools.erase(node->useCount);
+            } else {
+                // 池子中有多个 node, 则让 node 的上一个和下一个直接相连，
+                // 这就相当于把 node 从池子中取出了。
+                NodePtr prev = node->pool.prev;
+                NodePtr next = node->pool.next;
+                prev->pool.next = next;
+                next->pool.prev = prev;
             }
 
-            return assignNewKey(key);
+            // 把 node 放到下一个池子的顶部，
+            // 首先，定位到下一个池子。
+            node->useCount++;
+            // 然后，分两种情况：
+            if (pools[node->useCount]) {
+                // 一种情况是：下一个池子是非空的，
+                // 则让它作为这个池子的，新的首节点。
+                NodePtr poolHead = pools[node->useCount];
+                NodePtr poolTail = poolHead->pool.prev;
+                node->pool.prev = poolTail;
+                node->pool.next = poolHead;
+                poolTail->pool.next = node;
+                poolHead->pool.prev = node;
+                pools[node->useCount] = node;
+
+                // 更新 node 在 queue 中的位置
+                NodePtr queueNext = node->pool.next;
+                NodePtr queuePrev = queueNext->queue.prev;
+                node->queue.prev = queuePrev;
+                node->queue.next = queueNext;
+                queueNext->queue.prev = node;
+                queuePrev->queue.next = node;
+            } else {
+                // 另外一种情况：下一个池子是空的。
+                // 这时直接赋值就行了。
+                pools[node->useCount] = node;
+
+                // 但是注意要让它自指成环，因为我们需要利用环的一些性质。
+                node->pool.next = node;
+                node->pool.prev = node;
+
+                // 更新 node 在 queue 中的位置
+                NodePtr oldPoolHead = pool;
+                NodePtr prevNodeInQueue = oldPoolHead->queue.prev;
+                node->queue.prev = prevNodeInQueue;
+                node->queue.next = oldPoolHead;
+                prevNodeInQueue->queue.next = node;
+                oldPoolHead->queue.prev = node;
+            }
         }
     };
 }
