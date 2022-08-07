@@ -19,7 +19,19 @@ namespace SystemDesign::Cache {
     public:
 
         explicit LFUCacheGen(int capacity) : tail(), addressMap(), capacity(capacity), pools() {
+            std::vector<NodePtr> nodes (capacity);
+            for (size_t i = 0; i < capacity; ++i) {
+                size_t prevIdx = (i + capacity - 1) % capacity;
+                NodePtr prev = nodes[prevIdx];
+                NodePtr curr = nodes[i];
+                prev->queue.next = curr;
+                curr->queue.prev = prev;
+                prev->pool.next = curr;
+                curr->pool.prev = prev;
+            }
 
+            pools[0] = nodes[0];
+            tail = nodes[0]->queue.prev;
         }
 
         void put(KeyT key, ValT val) {
