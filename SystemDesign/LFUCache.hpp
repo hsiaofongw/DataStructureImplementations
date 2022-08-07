@@ -19,7 +19,9 @@ namespace SystemDesign::Cache {
     public:
 
         explicit LFUCacheGen(int capacity) : tail(), addressMap(), capacity(capacity), pools() {
-            std::vector<NodePtr> nodes (capacity);
+            std::vector<NodePtr> nodes;
+            for (size_t i = 0; i < capacity; ++i)
+                nodes.push_back(std::make_shared<ListNode>());
             for (size_t i = 0; i < capacity; ++i) {
                 size_t prevIdx = (i + capacity - 1) % capacity;
                 NodePtr prev = nodes[prevIdx];
@@ -30,13 +32,14 @@ namespace SystemDesign::Cache {
                 curr->pool.prev = prev;
             }
 
-            pools[0] = nodes[0];
-            tail = nodes[0]->queue.prev;
+            if (capacity) {
+                pools[0] = nodes[0];
+                tail = nodes[0]->queue.prev;
+            }
         }
 
         void put(KeyT key, ValT val) {
-            auto keyNode = renewKey(key);
-            if (keyNode)
+            if (auto keyNode = renewKey(key))
                 keyNode->val = val;
         }
 
@@ -50,10 +53,14 @@ namespace SystemDesign::Cache {
         }
 
         void printLink() {
-            auto _head = tail->next;
-            for (size_t i = 0; i < capacity; ++i) {
-                std::cout << "(key=" << (_head->key) << ", " << "cnt=" << (_head->useCount) << ") ";
-                _head = _head->next;
+            auto head = tail->queue.next;
+            while (true) {
+                std::cout << "(key=" << head->key << ", count=" << head->useCount << ") ";
+
+                head = head->queue.next;
+                if (head == tail->queue.next) {
+                    break;
+                }
             }
             std::cout << std::endl;
         }
@@ -129,8 +136,9 @@ namespace SystemDesign::Cache {
             node->useCount++;
 
             NodePtr poolHead = pools[node->useCount];
-            NodePtr queuePrev = poolHead->queue.prev;
-            queueInsertAt(node, queuePrev, poolHead);
+            if (poolHead) {
+                queueInsertAt(node, poolHead->queue.prev, poolHead);
+            }
 
             NodePtr prevNode = node->queue.prev;
             if (node->useCount > prevNode->useCount) {
@@ -139,7 +147,10 @@ namespace SystemDesign::Cache {
                 } else {
                     poolHead = pools[(node->queue.prev)->useCount];
                 }
-                queueInsertAt(node, poolHead->queue.prev, poolHead);
+
+                if (poolHead) {
+                    queueInsertAt(node, poolHead->queue.prev, poolHead);
+                }
             }
 
             if (node == tail) {
@@ -169,6 +180,7 @@ namespace SystemDesign::Cache {
         NodePtr assignNewKeyNode(const KeyT &key) {
             NodePtr node = tail;
             addressMap[node->key] = nullptr;
+            addressMap.erase(node->key);
             addressMap[key] = node;
             node->key = key;
             node->useCount = 0;
@@ -177,6 +189,10 @@ namespace SystemDesign::Cache {
         }
 
         NodePtr renewKey(const KeyT &key) {
+            if (!tail) {
+                return tail;
+            }
+
             if (addressMap[key]) {
                 NodePtr node = addressMap[key];
                 renewKeyNode(node);
