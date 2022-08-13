@@ -42,7 +42,7 @@ namespace Algorithm::RotateLinkedList {
             tail->next = root;
 
             int actualK = N - (k % N);
-            // std::cout << "tail: " << (tail->val);
+            // std::cout << "queueTail: " << (queueTail->val);
             // std::cout << "k: " << k << " actualK: " << actualK << "\n";
             // std::cout << "N: " << N << "\n";
 

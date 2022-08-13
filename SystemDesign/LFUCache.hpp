@@ -18,23 +18,30 @@ namespace SystemDesign::Cache {
     class LFUCacheGen {
     public:
 
-        explicit LFUCacheGen(int capacity) : tail(), addressMap(), capacity(capacity), pools() {
-            std::vector<NodePtr> nodes;
-            for (size_t i = 0; i < capacity; ++i)
-                nodes.push_back(std::make_shared<ListNode>());
+        explicit LFUCacheGen(int capacity) : queueTail(), addressMap(), pools() {
+            queueHead = std::make_shared<ListNode>();
+            queueTail = std::make_shared<ListNode>();
+            queueHead->queue.next = queueTail;
+            queueTail->queue.prev = queueHead;
+
             for (size_t i = 0; i < capacity; ++i) {
-                size_t prevIdx = (i + capacity - 1) % capacity;
-                NodePtr prev = nodes[prevIdx];
-                NodePtr curr = nodes[i];
-                prev->queue.next = curr;
-                curr->queue.prev = prev;
-                prev->pool.next = curr;
-                curr->pool.prev = prev;
+                NodePtr node = std::make_shared<ListNode>();
+                queueInsertNodeBefore(node, queueTail);
             }
 
-            if (capacity) {
-                pools[0] = nodes[0];
-                tail = nodes[0]->queue.prev;
+            NodePtr lastOne = queueTail->queue.prev;
+            if (lastOne != queueHead) {
+                // not empty, i.e. capacity != 0
+                NodePtr firstOne = queueHead->queue.next;
+                lastOne->pool.next = firstOne;
+                firstOne->pool.prev = lastOne;
+                for (NodePtr head = firstOne; head != lastOne; head=head->queue.next) {
+                    NodePtr nextOne = head->queue.next;
+                    head->pool.next = nextOne;
+                    nextOne->pool.prev = head;
+                }
+
+                pools[0] = firstOne;
             }
         }
 
@@ -52,23 +59,12 @@ namespace SystemDesign::Cache {
             return defaultValue;
         }
 
-        void printLink() {
-            auto head = tail->queue.next;
-            while (true) {
-                std::cout << "(key=" << head->key << ", count=" << head->useCount << ") ";
-
-                head = head->queue.next;
-                if (head == tail->queue.next) {
-                    break;
-                }
-            }
-            std::cout << std::endl;
+        void printInternal() {
+            printQueue();
+            printPools();
         }
 
     private:
-
-        size_t capacity;
-
         struct ListNode;
         using NodePtr = std::shared_ptr<ListNode>;
 
@@ -86,13 +82,51 @@ namespace SystemDesign::Cache {
             ValT val;
         };
 
-        NodePtr tail;
+        NodePtr queueTail;
+        NodePtr queueHead;
         std::unordered_map<KeyT, NodePtr> addressMap;
         std::unordered_map<size_t, NodePtr> pools;
 
+        void printKey(NodePtr node) {
+            if (node) {
+                std::cout << "(" << node->key << "," << node->useCount << ") ";
+            }
+        }
+
+        void printPool(NodePtr poolHead, size_t poolIdx) {
+            if (poolHead) {
+                NodePtr head = poolHead;
+                std::cout << "pool " << poolIdx << ": ";
+                while (true) {
+                    printKey(head);
+                    head = head->pool.next;
+                    if (head == poolHead) {
+                        break;
+                    }
+                }
+                std::cout << std::endl;
+            }
+        }
+
+        void printQueue() {
+            std::cout << "queue: ";
+            for (NodePtr head = queueHead->queue.next; head != queueTail; head = head->queue.next) {
+                printKey(head);
+            }
+            std::cout << std::endl;
+        }
+
+        void printPools() {
+            for (auto &pair : pools) {
+                const size_t poolIdx = pair.first;
+                NodePtr poolHead = pair.second;
+                printPool(poolHead, poolIdx);
+            }
+        }
+
         /** 把 node 从池子取出 */
-        void extractNodeFromPools(NodePtr node) {
-            if (node->pool.prev == node) {
+        void detachFromPool(NodePtr node) {
+            if (node->pool.prev == node && pools[node->useCount] == node) {
                 // 池子中只有 node 这一个
                 pools[node->useCount] = nullptr;
 
@@ -107,94 +141,96 @@ namespace SystemDesign::Cache {
                 prev->pool.next = next;
                 next->pool.prev = prev;
             }
+
+            // 让 node 自指是必要的，因为当它被放到另外一个 pool 之后，
+            // 我们不希望它还继续和当前 pool 的节点保持有联系（通过 .pool.next 或者 .pool.prev）。
+            node->pool.prev = node;
+            node->pool.next = node;
         }
 
-        /** 更新 node 在队列中的位置 */
-        void queueInsertAt(NodePtr node, NodePtr queuePrev, NodePtr queueNext) {
+        void queueInsertNodeBefore(NodePtr node, NodePtr position) {
+            NodePtr queuePrev = position->queue.prev;
+            node->queue.prev = queuePrev;
+            node->queue.next = position;
+            queuePrev->queue.next = node;
+            position->queue.prev = node;
+        }
+
+        /** 把 node 指向的节点移动到 position 前面 */
+        void queueMoveNodeBefore(NodePtr node, NodePtr position) {
+            assert((node != position));
+            detachFromQueue(node);
+            queueInsertNodeBefore(node, position);
+        }
+
+        void detachFromQueue(NodePtr node) {
             (node->queue.prev)->queue.next = node->queue.next;
             (node->queue.next)->queue.prev = node->queue.prev;
-            node->queue.next = queueNext;
-            node->queue.prev = queuePrev;
-            queuePrev->queue.next = node;
-            queueNext->queue.prev = node;
         }
 
-        /** 更新 node 在池子中的位置 */
-        void poolInsertAt(NodePtr node, NodePtr poolPrev, NodePtr poolNext) {
-            // 把 node 从池子里取出
-            extractNodeFromPools(node);
+        void  moveForward(NodePtr node) {
+            size_t currentPoolIndex = node->useCount;
+            size_t nextPoolIndex = currentPoolIndex+1;
+            if (pools[nextPoolIndex]) {
+                queueMoveNodeBefore(node, pools[nextPoolIndex]);
+                return;
+            }
 
-            // 在新的位置建立链接
-            node->pool.next = poolNext;
-            node->pool.prev = poolPrev;
-            poolPrev->pool.next = node;
-            poolNext->pool.prev = node;
+            NodePtr head = pools[currentPoolIndex];
+            if (head && (head != node)) {
+                queueMoveNodeBefore(node, head);
+            }
         }
 
-        void moveForward(NodePtr node) {
-            NodePtr tailRepl = tail->queue.prev;
-            node->useCount++;
-
-            NodePtr poolHead = pools[node->useCount];
-            if (poolHead) {
-                queueInsertAt(node, poolHead->queue.prev, poolHead);
-            }
-
-            NodePtr prevNode = node->queue.prev;
-            if (node->useCount > prevNode->useCount) {
-                if (pools[node->useCount]) {
-                    poolHead = pools[node->useCount];
-                } else {
-                    poolHead = pools[(node->queue.prev)->useCount];
-                }
-
-                if (poolHead) {
-                    queueInsertAt(node, poolHead->queue.prev, poolHead);
-                }
-            }
-
-            if (node == tail) {
-                tail = tailRepl;
-            }
+        void poolInsertBefore(NodePtr node, NodePtr position) {
+            assert((node != position));
+            NodePtr prev = position->pool.prev;
+            node->pool.prev = prev;
+            node->pool.next = position;
+            prev->pool.next = node;
+            position->pool.prev = node;
         }
 
         void poolInsertByIndex(NodePtr node, size_t poolIdx) {
+            detachFromPool(node);
             if (pools[poolIdx]) {
-                NodePtr poolHead = pools[poolIdx];
-                NodePtr poolTail = poolHead->pool.prev;
-                poolInsertAt(node, poolTail, poolHead);
-                pools[poolIdx] = node;
-            } else {
-                extractNodeFromPools(node);
-                pools[poolIdx] = node;
-                node->pool.prev = node;
-                node->pool.next = node;
+                poolInsertBefore(node, pools[poolIdx]);
             }
+            pools[poolIdx] = node;
         }
 
         void renewKeyNode(NodePtr node) {
             moveForward(node);
-            poolInsertByIndex(node, node->useCount);
+            poolInsertByIndex(node, node->useCount+1);
+            node->useCount++;
         }
 
         NodePtr assignNewKeyNode(const KeyT &key) {
-            NodePtr node = tail;
-            addressMap[node->key] = nullptr;
-            addressMap.erase(node->key);
+            NodePtr node = queueTail->queue.prev;
+
+            // retire
+            if (addressMap[node->key]) {
+                addressMap[node->key] = nullptr;
+                addressMap.erase(node->key);
+            }
+            detachFromPool(node);
+            node->useCount = 0;
+
+            // re-hire
             addressMap[key] = node;
             node->key = key;
-            node->useCount = 0;
             renewKeyNode(node);
+
             return node;
         }
 
         NodePtr renewKey(const KeyT &key) {
-            if (!tail) {
-                return tail;
+            if (queueHead->queue.next == queueTail) {
+                return nullptr;
             }
 
-            if (addressMap[key]) {
-                NodePtr node = addressMap[key];
+            NodePtr node = addressMap[key];
+            if (node) {
                 renewKeyNode(node);
                 return node;
             }
