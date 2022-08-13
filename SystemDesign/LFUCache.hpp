@@ -87,6 +87,29 @@ namespace SystemDesign::Cache {
         std::unordered_map<KeyT, NodePtr> addressMap;
         std::unordered_map<size_t, NodePtr> pools;
 
+        NodePtr deleteNodeInRotatedDoubleLinkedList(NodePtr head, NodePtr node) {
+            if (head && node) {
+                NodePtr nextHead = head;
+                if (node == head) {
+                    if (head->pool.prev == head) {
+                        nextHead = nullptr;
+                    } else {
+                        nextHead = head->pool.next;
+                    }
+                }
+                NodePtr prev = node->pool.prev;
+                NodePtr next = node->pool.next;
+                prev->pool.next = next;
+                next->pool.prev = prev;
+
+                node->pool.prev = node;
+                node->pool.next = node;
+
+                return nextHead;
+            }
+            assert((false));
+        }
+
         void printKey(NodePtr node) {
             if (node) {
                 std::cout << "(" << node->key << "," << node->useCount << ") ";
@@ -125,27 +148,14 @@ namespace SystemDesign::Cache {
         }
 
         /** 把 node 从池子取出 */
-        void detachFromPool(NodePtr node) {
-            if (node->pool.prev == node && pools[node->useCount] == node) {
-                // 池子中只有 node 这一个
-                pools[node->useCount] = nullptr;
-
-                // 现在池子空了，pools 是一个字典，也最好把对应的键值对释放掉，否则，
-                // 长此以往 unordered_map 的性能会因为有大量废弃不用的键值对而下降。
-                pools.erase(node->useCount);
-            } else {
-                // 池子中有多个 node, 则让 node 的上一个和下一个直接相连，
-                // 这就相当于把 node 从池子中取出了。
-                NodePtr prev = node->pool.prev;
-                NodePtr next = node->pool.next;
-                prev->pool.next = next;
-                next->pool.prev = prev;
+        void detachFromPool(NodePtr node, size_t poolIdx) {
+            NodePtr pool = pools[poolIdx];
+            if (pool) {
+                pools[poolIdx] = deleteNodeInRotatedDoubleLinkedList(pool, node);
+                if (!pools[poolIdx]) {
+                    pools.erase(poolIdx);
+                }
             }
-
-            // 让 node 自指是必要的，因为当它被放到另外一个 pool 之后，
-            // 我们不希望它还继续和当前 pool 的节点保持有联系（通过 .pool.next 或者 .pool.prev）。
-            node->pool.prev = node;
-            node->pool.next = node;
         }
 
         void queueInsertNodeBefore(NodePtr node, NodePtr position) {
@@ -158,9 +168,10 @@ namespace SystemDesign::Cache {
 
         /** 把 node 指向的节点移动到 position 前面 */
         void queueMoveNodeBefore(NodePtr node, NodePtr position) {
-            assert((node != position));
-            detachFromQueue(node);
-            queueInsertNodeBefore(node, position);
+            if (node != position) {
+                detachFromQueue(node);
+                queueInsertNodeBefore(node, position);
+            }
         }
 
         void detachFromQueue(NodePtr node) {
@@ -182,21 +193,23 @@ namespace SystemDesign::Cache {
             }
         }
 
-        void poolInsertBefore(NodePtr node, NodePtr position) {
-            assert((node != position));
-            NodePtr prev = position->pool.prev;
-            node->pool.prev = prev;
-            node->pool.next = position;
-            prev->pool.next = node;
-            position->pool.prev = node;
+        NodePtr poolInsertBefore(NodePtr node, NodePtr head) {
+            if (head) {
+                NodePtr nextHead = node;
+                NodePtr prev = head->pool.prev;
+                node->pool.prev = prev;
+                prev->pool.next = node;
+                node->pool.next = head;
+                head->pool.prev = node;
+                return nextHead;
+            } else {
+                return node;
+            }
         }
 
         void poolInsertByIndex(NodePtr node, size_t poolIdx) {
-            detachFromPool(node);
-            if (pools[poolIdx]) {
-                poolInsertBefore(node, pools[poolIdx]);
-            }
-            pools[poolIdx] = node;
+            detachFromPool(node, node->useCount);
+            pools[poolIdx] = poolInsertBefore(node, pools[poolIdx]);
         }
 
         void renewKeyNode(NodePtr node) {
@@ -213,7 +226,7 @@ namespace SystemDesign::Cache {
                 addressMap[node->key] = nullptr;
                 addressMap.erase(node->key);
             }
-            detachFromPool(node);
+            detachFromPool(node, node->useCount);
             node->useCount = 0;
 
             // re-hire

@@ -3,9 +3,7 @@
 #include <utility>
 
 /**
- * ["LFUCache","put","put","get","put","get","get","put","get","get","get"]
-   [[2],[1,1],[2,2],[1],[3,3],[2],[3],[4,4],[1],[3],[4]]
- * @return
+ [[2],[2,1],[3,2],[3],[2],[4,3],[2],[3],[4]]
  */
 
 int main() {
@@ -24,14 +22,12 @@ int main() {
         lfuCache.printInternal();
     };
 
-    put(1,1);
-    put(2,2);
-    get(1);
-    put(3,3);
-    get(2);
+    put(2,1);
+    put(3,2);
     get(3);
-    put(4,4);
-    get(1);
+    get(2);
+    put(4,3);
+    get(2);
     get(3);
     get(4);
 
