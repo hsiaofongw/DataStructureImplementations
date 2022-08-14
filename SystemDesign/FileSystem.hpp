@@ -73,6 +73,8 @@ namespace SystemDesign::FileSystem {
                 return nextHop;
             }
 
+            entries[pathName] = std::make_shared<INode>();
+            nextHop = entries[pathName];
             nextHop->type = INodeType::DIRECTORY;
             nextHop->fileSystem = std::make_shared<FileSystemEntry>();
             return nextHop;
