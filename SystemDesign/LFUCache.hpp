@@ -19,13 +19,13 @@ namespace SystemDesign::Cache {
     public:
 
         explicit LFUCacheGen(int capacity) : queueTail(), addressMap(), pools() {
-            queueHead = std::make_shared<ListNode>();
-            queueTail = std::make_shared<ListNode>();
+            queueHead = std::make_shared<Node>();
+            queueTail = std::make_shared<Node>();
             queueHead->queue.next = queueTail;
             queueTail->queue.prev = queueHead;
 
             for (size_t i = 0; i < capacity; ++i) {
-                NodePtr node = std::make_shared<ListNode>();
+                NodePtr node = std::make_shared<Node>();
                 queueInsertNodeBefore(node, queueTail);
             }
 
@@ -65,21 +65,20 @@ namespace SystemDesign::Cache {
         }
 
     private:
-        struct ListNode;
-        using NodePtr = std::shared_ptr<ListNode>;
+        struct Node;
+        using NodePtr = std::shared_ptr<Node>;
 
         struct Link {
             NodePtr prev;
             NodePtr next;
         };
 
-        struct ListNode {
-            ListNode() : pool(), queue(), useCount(), key(), val() { }
-            Link pool;
-            Link queue;
-            size_t useCount;
+        struct Node {
             KeyT key;
             ValT val;
+            size_t useCount;
+            Link pool;
+            Link queue;
         };
 
         NodePtr queueTail;
