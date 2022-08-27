@@ -1,20 +1,44 @@
 #include <iostream>
 #include "SystemDesign/LFUCache.hpp"
-#include <utility>
-#include "SystemDesign/FileSystem.hpp"
-
-/**
- [[2],[2,1],[3,2],[3],[2],[4,3],[2],[3],[4]]
- */
 
 int main() {
-    using SystemDesign::FileSystem::LeetCode::FileSystem;
-    FileSystem fs;
-    fs.ls("/");
-    fs.mkdir("/a/b/c");
-    fs.addContentToFile("/a/b/c/d", "hello");
-    fs.ls("/");
-    auto content = fs.readContentFromFile("/a/b/c/d");
+    std::cout << "Capacity of Cache: ";
+    size_t capacity;
+    std::cin >> capacity;
 
-    return 0;
+    using SystemDesign::Cache::LFUCache;
+    LFUCache<> cache (capacity);
+
+    while (true) {
+        std::cout << "Instruction: ";
+        std::string command;
+        std::cin >> command;
+
+        if (command == "get") {
+            int key;
+            std::cin >> key;
+            if (auto valueMaybe = cache.get(key)) {
+                std::cout << "Value is: " << valueMaybe.value() << std::endl;
+            } else {
+                std::cout << "No such key." << std::endl;
+            }
+        } else if (command == "put") {
+            int key;
+            std::cin >> key;
+            int value;
+            std::cin >> value;
+            if (!cache.put(key, value)) {
+                std::cout << "Put failed, something goes wrong." << std::endl;
+            }
+            std::cout << "Done." << std::endl;
+        } else if (command == "showInternalState" || command == "show") {
+            cache.printInternal();
+        } else if (command == "exit") {
+            std::cout <<  "Exiting..." << std::endl;
+            return 0;
+        } else {
+            std::cerr << "Unknown command, exiting..." << std::endl;
+            return 1;
+        }
+    }
 }

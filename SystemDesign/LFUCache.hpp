@@ -11,22 +11,23 @@
 #include <memory>
 #include <iostream>
 #include <deque>
+#include <optional>
 
 namespace SystemDesign::Cache {
 
-    template <typename KeyT = int, typename ValT = int, ValT defaultValue = -1>
-    class LFUCacheGen {
+    template <typename KeyT = int, typename ValT = int>
+    class LFUCache {
     public:
 
-        explicit LFUCacheGen(int capacity) : queueTail(), addressMap(), pools() {
+        explicit LFUCache(size_t capacity) : queueTail(), addressMap(), pools() {
             queueHead = std::make_shared<Node>();
             queueTail = std::make_shared<Node>();
             queueHead->queue.next = queueTail;
             queueTail->queue.prev = queueHead;
 
             for (size_t i = 0; i < capacity; ++i) {
-                NodePtr node = std::make_shared<Node>();
-                queueInsertNodeBefore(node, queueTail);
+                NodePtr nodePtr = std::make_shared<Node>();
+                queueInsertNodeBefore(nodePtr, queueTail);
             }
 
             NodePtr lastOne = queueTail->queue.prev;
@@ -45,23 +46,27 @@ namespace SystemDesign::Cache {
             }
         }
 
-        void put(KeyT key, ValT val) {
-            if (auto keyNode = renewKey(key))
+        bool put(KeyT key, ValT val) {
+            if (auto keyNode = renewKey(key)) {
                 keyNode->val = val;
+                return true;
+            }
+
+            return false;
         }
 
-        ValT get(KeyT key) {
+        std::optional<ValT> get(KeyT key) {
             if (addressMap[key]) {
                 auto keyNode = renewKey(key);
                 return keyNode->val;
             }
 
-            return defaultValue;
+            return {};
         }
 
-        void printInternal() {
-            printQueue();
-            printPools();
+        void printInternal(bool keyOnly = true) {
+            printQueue(keyOnly);
+            printPools(keyOnly);
         }
 
     private:
@@ -109,40 +114,56 @@ namespace SystemDesign::Cache {
             assert((false));
         }
 
-        void printKey(NodePtr node) {
+        void printKey(NodePtr node, bool keyOnly = true) {
             if (node) {
-                std::cout << "(" << node->key << "," << node->useCount << ") ";
+                if (keyOnly) {
+                    std::cout << node->key << " ";
+                } else {
+                    std::cout << "(" << node->key << " -> " << node->val << ", " << "useCount: " << node->useCount << ") ";
+                }
             }
         }
 
-        void printPool(NodePtr poolHead, size_t poolIdx) {
+        void printPool(size_t poolIdx, bool keyOnly = true) {
+            NodePtr poolHead = pools[poolIdx];
             if (poolHead) {
                 NodePtr head = poolHead;
-                std::cout << "pool " << poolIdx << ": ";
+                std::cout << "[" << poolIdx << "]: ";
                 while (true) {
-                    printKey(head);
+                    printKey(head, keyOnly);
                     head = head->pool.next;
                     if (head == poolHead) {
                         break;
+                    } else {
+                        std::cout << "-> ";
                     }
                 }
                 std::cout << std::endl;
             }
         }
 
-        void printQueue() {
-            std::cout << "queue: ";
+        void printQueue(bool keyOnly = true) {
+            std::cout << "Queue: ";
             for (NodePtr head = queueHead->queue.next; head != queueTail; head = head->queue.next) {
-                printKey(head);
+                printKey(head, keyOnly);
+                if (head->queue.next != queueTail) {
+                    std::cout << "-> ";
+                }
             }
             std::cout << std::endl;
         }
 
-        void printPools() {
-            for (auto &pair : pools) {
-                const size_t poolIdx = pair.first;
-                NodePtr poolHead = pair.second;
-                printPool(poolHead, poolIdx);
+        void printPools(bool keyOnly = true) {
+            std::cout << "Pools: " << std::endl;
+            NodePtr prev = nullptr;
+            NodePtr head = queueHead->queue.next;
+            while (head != queueTail) {
+                if ((!prev) || (prev->useCount != head->useCount)) {
+                    printPool(head->useCount, keyOnly);
+                }
+
+                prev = head;
+                head = head->queue.next;
             }
         }
 
