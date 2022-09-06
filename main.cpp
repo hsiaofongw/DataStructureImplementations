@@ -8,7 +8,8 @@
 int main() {
     using TestCases::MedianOfTwoSortedArray::getTestCases;
 
-    getTestCases();
+    auto testCases = getTestCases();
+    std::cout << "";
 
     return 0;
 }

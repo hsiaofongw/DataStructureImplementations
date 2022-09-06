@@ -28,8 +28,30 @@ namespace TestCases::MedianOfTwoSortedArray {
         if (parsedResult) {
             auto columnList = getColumnList(parsedResult.value());
             auto table = getRegularTable(columnList);
+            std::vector<TestCase> testCases;
+            for (auto &row : table) {
+                std::vector<std::string> &lhs_s = row["l"];
+                std::vector<std::string> &rhs_s = row["r"];
+                std::vector<std::string> &m_s = row["m"];
 
-            std::cout << "";
+                TestCase testCase;
+
+                for (std::string &s : lhs_s) {
+                    testCase.lhs.push_back(std::stoi(s));
+                }
+
+                for (std::string &s : rhs_s) {
+                    testCase.rhs.push_back(std::stoi(s));
+                }
+
+                for (std::string &s : m_s) {
+                    testCase.median = std::stod(s);
+                    break;
+                }
+                testCases.emplace_back(testCase);
+            }
+
+            return testCases;
         }
 
         return {};
