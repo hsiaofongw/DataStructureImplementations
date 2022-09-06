@@ -12,7 +12,7 @@
 #include <deque>
 #include <cstdlib>
 #include <optional>
-
+#include <unordered_map>
 
 namespace Utils::Parser::MyTestCaseParser {
 
@@ -20,16 +20,15 @@ namespace Utils::Parser::MyTestCaseParser {
      * <CSV> ::= <Row> <MoreRows>
      * <MoreRows> ::= eps
      *   | ';' <CSV>
-     * <Row> ::= <Key> <NumberList>
-     * <NumberList> ::= <Number> <NumberList>
+     * <Row> ::= <Key> <CellList>
+     * <CellList> ::= <Cell> <CellList>
      *   | <eps>
-     * <Number> ::= digit
-     *   | '-' digit
+     * <Cell> ::= string
      * <Key> ::= string
      */
 
     enum class NodeType {
-        CSV, Row, MoreRows, NumberList, Number, Key, Leaf
+        CSV, Row, MoreRows, Key, CellList, Cell, Leaf
     };
 
     struct Node;
@@ -68,15 +67,10 @@ namespace Utils::Parser::MyTestCaseParser {
     }
 
     bool parseCSV(const std::vector<TokenPtr> &s, size_t offset, NodePtr &root);
-
     bool parseRow(const std::vector<TokenPtr> &s, size_t offset, NodePtr &root);
-
     bool parseMoreRows(const std::vector<TokenPtr> &s, size_t offset, NodePtr &root);
-
-    bool parseNumberList(const std::vector<TokenPtr> &s, size_t offset, NodePtr &root);
-
-    bool parseNumber(const std::vector<TokenPtr> &s, size_t offset, NodePtr &root);
-
+    bool parseCellList(const std::vector<TokenPtr> &s, size_t offset, NodePtr &root);
+    bool parseCell(const std::vector<TokenPtr> &s, size_t offset, NodePtr &root);
     bool parseKey(const std::vector<TokenPtr> &s, size_t offset, NodePtr &root);
 
     bool parseCSV(const std::vector<TokenPtr> &s, size_t offset, NodePtr &root) {
@@ -100,12 +94,12 @@ namespace Utils::Parser::MyTestCaseParser {
         if (offset < s.size() && s[offset]) {
             NodePtr keyNodePtr = makeNonLeaf(NodeType::Key);
             if (parseKey(s, offset, keyNodePtr)) {
-                NodePtr numberListNodePtr = makeNonLeaf(NodeType::NumberList);
-                if (parseNumberList(s, offset + keyNodePtr->length, numberListNodePtr)) {
+                NodePtr cellListNodePtr = makeNonLeaf(NodeType::CellList);
+                if (parseCellList(s, offset + keyNodePtr->length, cellListNodePtr)) {
                     if (root->children) {
                         root->children->push_back(keyNodePtr);
-                        root->children->push_back(numberListNodePtr);
-                        root->length = keyNodePtr->length + numberListNodePtr->length;
+                        root->children->push_back(cellListNodePtr);
+                        root->length = keyNodePtr->length + cellListNodePtr->length;
                     }
                     return true;
                 }
@@ -146,17 +140,17 @@ namespace Utils::Parser::MyTestCaseParser {
         return true;
     }
 
-    bool parseNumberList(const std::vector<TokenPtr> &s, size_t offset, NodePtr &root) {
+    bool parseCellList(const std::vector<TokenPtr> &s, size_t offset, NodePtr &root) {
         if (offset < s.size()) {
             if (auto &tokenPtr = s[offset]) {
-                auto numberNodePtr = makeNonLeaf(NodeType::Number);
-                if (parseNumber(s, offset, numberNodePtr)) {
-                    auto numberListNode = makeNonLeaf(NodeType::NumberList);
-                    if (parseNumberList(s, offset + 1, numberListNode)) {
+                auto cellNodePtr = makeNonLeaf(NodeType::Cell);
+                if (parseCell(s, offset, cellNodePtr)) {
+                    auto cellListNode = makeNonLeaf(NodeType::CellList);
+                    if (parseCellList(s, offset + 1, cellListNode)) {
                         if (root->children) {
-                            root->children->push_back(numberNodePtr);
-                            root->children->push_back(numberListNode);
-                            root->length = numberNodePtr->length + numberListNode->length;
+                            root->children->push_back(cellNodePtr);
+                            root->children->push_back(cellListNode);
+                            root->length = cellNodePtr->length + cellListNode->length;
                         }
                         return true;
                     }
@@ -167,29 +161,13 @@ namespace Utils::Parser::MyTestCaseParser {
         return true;
     }
 
-    bool parseNumber(const std::vector<TokenPtr> &s, size_t offset, NodePtr &root) {
-        if (offset < s.size()) {
-            if (auto &tokenPtr = s[offset]) {
-                std::string &tokenContent = tokenPtr->content;
-                if (!tokenContent.empty()) {
-                    char c = tokenContent.at(0);
-                    if (std::isdigit(c)) {
-                        if (root->children) {
-                            root->children->push_back(makeLeaf(tokenPtr));
-                            root->length = 1;
-                        }
-                        return true;
-                    }
-
-                    if (c == '-') {
-                        if (root->children) {
-                            root->children->push_back(makeLeaf(tokenPtr));
-                            root->length = 1;
-                        }
-                        return true;
-                    }
-                }
+    bool parseCell(const std::vector<TokenPtr> &s, size_t offset, NodePtr &root) {
+        if (offset < s.size() && s[offset] && s[offset]->content != ";") {
+            if (root->children) {
+                root->children->push_back(makeLeaf(s[offset]));
+                root->length = 1;
             }
+            return true;
         }
 
         return false;
@@ -207,7 +185,7 @@ namespace Utils::Parser::MyTestCaseParser {
             }
         };
         while (i < N) {
-            if (s[i] == ' ') {
+            if (isspace(s[i])) {
                 reapToken(token);
                 token.clear();
             } else if (s[i] == ';') {
@@ -228,8 +206,8 @@ namespace Utils::Parser::MyTestCaseParser {
         return tokens;
     }
 
-    std::vector<int64_t> traverseNumList(NodePtr &root) {
-        std::vector<int64_t> result;
+    std::vector<std::string> traverseCellList(NodePtr &root) {
+        std::vector<std::string> result;
         std::deque<NodePtr> candidates;
         candidates.push_back(root);
         while (!candidates.empty()) {
@@ -237,18 +215,14 @@ namespace Utils::Parser::MyTestCaseParser {
             candidates.pop_front();
 
             if (head) {
-                if (head->type == NodeType::Number) {
+                if (head->type == NodeType::Cell) {
                     if (head->children && !head->children->empty()) {
                         auto numberNode = head->children->at(0);
-                        if (numberNode->tokenPtr && numberNode->tokenPtr->content.size() < 20) {
-                            // An int64_t in decimal has at most 20 digits, i.e.: Log10[2^64-1] ~= 20
-                            // So if an integer's digits count exceed 20, there might be something wrong,
-                            // and we currently don't support BigInt yet.
-                            int64_t num = std::stol(numberNode->tokenPtr->content);
-                            result.push_back(num);
+                        if (numberNode && numberNode->tokenPtr) {
+                            result.push_back(numberNode->tokenPtr->content);
                         }
                     }
-                } else if (head->type == NodeType::NumberList) {
+                } else if (head->type == NodeType::CellList) {
                     if (head->children) {
                         for (auto &childNode: *head->children) {
                             if (childNode) {
@@ -263,10 +237,10 @@ namespace Utils::Parser::MyTestCaseParser {
         return result;
     }
 
-    std::vector<std::pair<std::string, std::vector<int64_t>>> traverseRows(
+    std::vector<std::pair<std::string, std::vector<std::string>>> traverseRows(
             NodePtr &root
     ) {
-        std::vector<std::pair<std::string, std::vector<int64_t>>> result;
+        std::vector<std::pair<std::string, std::vector<std::string>>> result;
         std::deque<NodePtr> candidates;
         candidates.push_back(root);
         while (!candidates.empty()) {
@@ -286,14 +260,14 @@ namespace Utils::Parser::MyTestCaseParser {
                 } else if (head->type == NodeType::Row) {
                     if (head->children && !head->children->empty()) {
                         auto keyNode = head->children->at(0);
-                        auto numListNode = head->children->at(1);
+                        auto cellListNode = head->children->at(1);
                         if (keyNode && keyNode->children && !keyNode->children->empty()) {
                             auto stringNode = keyNode->children->at(0);
                             if (stringNode->tokenPtr) {
-                                if (numListNode) {
-                                    std::pair<std::string, std::vector<int64_t>> pair;
+                                if (cellListNode) {
+                                    std::pair<std::string, std::vector<std::string>> pair;
                                     pair.first = stringNode->tokenPtr->content;
-                                    auto numListVector = traverseNumList(numListNode);
+                                    auto numListVector = traverseCellList(cellListNode);
                                     pair.second = numListVector;
                                     result.emplace_back(pair);
                                 }
@@ -311,7 +285,9 @@ namespace Utils::Parser::MyTestCaseParser {
         return result;
     }
 
-    std::optional<std::vector<std::pair<std::string, std::vector<int64_t>>>> parse(std::string s) {
+    using ParsedPair = std::pair<std::string, std::vector<std::string>>;
+
+    std::optional<std::vector<ParsedPair>> parse(const std::string &s) {
         NodePtr root = makeNonLeaf(NodeType::CSV);
         std::vector<TokenPtr> tokens = split(s);
 
@@ -321,6 +297,47 @@ namespace Utils::Parser::MyTestCaseParser {
         }
 
         return traverseRows(root);
+    }
+
+
+    template <typename CellT>
+    using ColumnData = std::vector<CellT>;
+
+    template <typename CellT>
+    using ColumnList = std::unordered_map<std::string, ColumnData<CellT>>;
+
+    ColumnList<std::vector<std::string>> getColumnList(const std::vector<ParsedPair> &parsedPairs) {
+        std::unordered_map<std::string, std::vector<std::vector<std::string>>> transposedTable;
+        for (auto &pair : parsedPairs) {
+            transposedTable[pair.first].emplace_back(pair.second);
+        }
+
+        return transposedTable;
+    }
+
+    template <typename CellT>
+    using Row = std::unordered_map<std::string, CellT>;
+
+    std::vector<Row<std::vector<std::string>>> getRegularTable(const std::unordered_map<std::string, ColumnData<std::vector<std::string>>> &transposedTable) {
+        size_t nRows = 0;
+        for (auto &pair : transposedTable) {
+            nRows = pair.second.size();
+            break;
+        }
+        for (auto &pair : transposedTable) {
+            nRows = std::min(nRows, pair.second.size());
+        }
+
+        std::vector<Row<std::vector<std::string>>> table;
+        for (size_t rowIdx = 0; rowIdx < nRows; rowIdx++) {
+            Row<std::vector<std::string>> row;
+            for (auto &pair : transposedTable) {
+                row[pair.first] = pair.second[rowIdx];
+            }
+            table.emplace_back(std::move(row));
+        }
+
+        return table;
     }
 
 }
