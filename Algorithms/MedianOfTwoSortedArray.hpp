@@ -31,7 +31,7 @@ namespace Algorithm::MedianOfTwoSortedArray {
             return slice.ptrV->at(slice.offset + halfLen(slice.length) - 1);
         } else {
             size_t rightMid = slice.offset + halfLen(slice.length);
-            return (slice.ptrV->at(rightMid-1) + slice.ptrV->at(rightMid)) / 2;
+            return (slice.ptrV->at(rightMid-1) + slice.ptrV->at(rightMid)) / 2.0;
         }
     }
 
@@ -44,7 +44,7 @@ namespace Algorithm::MedianOfTwoSortedArray {
             high->length -= lengthDecrease;
 
             if (low->length == 0 && high->length == 0) {
-                return (low->ptrV->at(low->offset) + high->ptrV->at(high->offset)) / 2;
+                return (low->ptrV->at(low->offset) + high->ptrV->at(high->offset)) / 2.0;
             }
             else if (low->length == 0) {
                 return medianOfSlice(*high);

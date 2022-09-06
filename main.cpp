@@ -9,7 +9,6 @@ int main() {
     using TestCases::MedianOfTwoSortedArray::getTestCases;
 
     auto testCases = getTestCases();
-    std::cout << "";
 
     return 0;
 }

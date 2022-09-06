@@ -22,8 +22,6 @@ namespace TestCases::MedianOfTwoSortedArray {
         using Utils::Parser::MyTestCaseParser::getColumnList;
         using Utils::Parser::MyTestCaseParser::getRegularTable;
 
-        std::cout << MEDIAN_OF_TWO_SORTED_ARRAY_TESTCASES_CONTENT << std::endl;
-
         auto parsedResult = Utils::Parser::MyTestCaseParser::parse(MEDIAN_OF_TWO_SORTED_ARRAY_TESTCASES_CONTENT);
         if (parsedResult) {
             auto columnList = getColumnList(parsedResult.value());
@@ -49,6 +47,24 @@ namespace TestCases::MedianOfTwoSortedArray {
                     break;
                 }
                 testCases.emplace_back(testCase);
+            }
+
+            for (auto &testCase : testCases) {
+                auto &l = testCase.lhs;
+                auto &r = testCase.rhs;
+                l.insert(l.end(), r.begin(), r.end());
+                std::sort(l.begin(), l.end());
+                double m;
+                if (l.size() % 2 == 1) {
+                    m = l[(l.size()-1)/2];
+                } else {
+                    size_t n = l.size();
+                    size_t i = n/2 - 1;
+                    size_t j = n/2;
+                    m = (l[i]+l[j])/2.0;
+                }
+
+                assert((m == testCase.median));
             }
 
             return testCases;
