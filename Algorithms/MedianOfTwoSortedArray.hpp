@@ -71,7 +71,7 @@ namespace Algorithm::MedianOfTwoSortedArray {
             if (low->length <= 2) {
                 std::array<size_t, 2> insertIndices { 0, 0 };
                 for (size_t i = 0; i < low->length; i++)
-                    insertIndices[i] = rankFloor(low->data[low->offset+i], *high);
+                    insertIndices[i] = rankFloor(low->data[low->offset+i], *high) + i;
 
                 size_t M = low->length + high->length;
                 std::array<size_t, 2> targetIndices { 0, 0 };
@@ -87,20 +87,29 @@ namespace Algorithm::MedianOfTwoSortedArray {
                 size_t medianCnt = 0;
                 for (size_t i = 0; i < targetIndicesCnt; i++) {
                     size_t targetIdx = targetIndices[i];
-                    bool found = false;
-                    for (int j = low->length-1; j >= 0; j--) {
-                        size_t insertIdx = insertIndices[j];
-                        if (insertIdx == targetIdx) {
-                            medians[medianCnt++] = low->data[low->offset + j];
-                            found = true;
-                            break;
+                    if (low->length == 2) {
+                        if (targetIdx < insertIndices[0]) {
+                            medians[medianCnt++] = high->data[high->offset + targetIdx];
+                        } else if (targetIdx == insertIndices[0]) {
+                            medians[medianCnt++] = low->data[low->offset];
+                        } else if (targetIdx > insertIndices[0] && targetIdx < insertIndices[1]) {
+                            medians[medianCnt++] = high->data[high->offset + targetIdx-1];
+                        } else if (targetIdx == insertIndices[1]) {
+                            medians[medianCnt++] = low->data[low->offset+1];
+                        } else if (targetIdx > insertIndices[1]) {
+                            medians[medianCnt++] = high->data[high->offset + targetIdx-2];
                         }
-                        if (targetIdx > insertIdx)
-                            targetIdx--;
+                    } else if (low->length == 1) {
+                        if (targetIdx < insertIndices[0]) {
+                            medians[medianCnt++] = high->data[high->offset + targetIdx];
+                        } else if (targetIdx == insertIndices[0]) {
+                            medians[medianCnt++] = low->data[low->offset];
+                        } else if (targetIdx > insertIndices[0]) {
+                            medians[medianCnt++] = high->data[high->offset + targetIdx-1];
+                        }
+                    } else if (low->length == 0) {
+                        return medianOfSlice(*high);
                     }
-
-                    if (!found)
-                        medians[medianCnt++] = high->data[high->offset + targetIdx];
                 }
 
                 return (medians[0] + medians[1]) / ((double) medianCnt);
@@ -109,13 +118,15 @@ namespace Algorithm::MedianOfTwoSortedArray {
             if (medianOfSlice(*low) > medianOfSlice(*high))
                 low.swap(high);
 
-            size_t deltaLen;
+            size_t deltaLen = std::min(
+                (low->length % 2 == 1) ? (low->length - 1) / 2 : low->length / 2 - 1,
+                (high->length % 2 == 1) ? (high->length - 1) / 2 : high->length / 2 - 1
+            );
 
-            deltaLen = (low->length % 2 == 1) ? (low->length - 1) / 2 : low->length / 2 - 1;
             low->offset += deltaLen;
             low->length -= deltaLen;
 
-            high->length -= (high->length % 2 == 1) ? (high->length - 1) / 2 : high->length / 2 - 1;;
+            high->length -= deltaLen;
         }
     }
 

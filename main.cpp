@@ -12,8 +12,8 @@ int main() {
         [-1,3]
      */
     using Algorithm::MedianOfTwoSortedArray::medianOfTwoSortedArray;
-    std::vector<int> lhs = { 1, 3 };
-    std::vector<int> rhs = { 2 };
+    std::vector<int> lhs = { 1,2,3 };
+    std::vector<int> rhs = { 4,5,6,7,8 };
     auto median = medianOfTwoSortedArray(lhs, rhs);
     std::cout << "Ans: " << median << std::endl;
     return 0;
