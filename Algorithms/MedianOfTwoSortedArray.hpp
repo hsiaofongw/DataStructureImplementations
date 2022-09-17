@@ -8,80 +8,132 @@
 #include <memory>
 #include <vector>
 #include <iostream>
+#include <array>
 
 namespace Algorithm::MedianOfTwoSortedArray {
+
     template <typename T>
     struct Slice {
-        std::vector<T> *ptrV;
+        T* data;
         size_t offset;
         size_t length;
     };
 
-    size_t halfLen(size_t len) {
-        if (len%2 == 1) {
-            return (len+1)/2;
-        } else {
-            return len/2;
-        }
-    }
-
     template <typename T>
-    T medianOfSlice(const Slice<T> &slice) {
+    double medianOfSlice(const Slice<T> &slice) {
         if (slice.length % 2 == 1) {
-            return slice.ptrV->at(slice.offset + halfLen(slice.length) - 1);
+            return slice.data[slice.offset + (slice.length-1) / 2];
         } else {
-            size_t rightMid = slice.offset + halfLen(slice.length);
-            return (slice.ptrV->at(rightMid-1) + slice.ptrV->at(rightMid)) / 2.0;
+            size_t halfLen = slice.length / 2;
+            return (slice.data[slice.offset + halfLen - 1] + slice.data[slice.offset + halfLen]) / 2.0;
         }
     }
 
+    // 返回在 ary 中所有严格比 element 小的元素的个数。
     template <typename T>
-    T medianOfTwoSortedArraySlice(std::shared_ptr<Slice<T>> low, std::shared_ptr<Slice<T>> high) {
+    size_t rankFloor(const T &element, const Slice<T> &ary) {
+        size_t len = ary.length;
+        size_t offset = ary.offset;
+
         while (true) {
-            size_t lengthDecrease = std::min(halfLen(low->length), halfLen(high->length));
-
-            low->length -= lengthDecrease;
-            high->length -= lengthDecrease;
-
-            if (low->length == 0 && high->length == 0) {
-                return (low->ptrV->at(low->offset) + high->ptrV->at(high->offset)) / 2.0;
+            if (len == 0) {
+                // 对于空数组 ary，element 插入之后 index 一定是 0
+                return offset - ary.offset;
             }
-            else if (low->length == 0) {
-                return medianOfSlice(*high);
-            }
-            else if (high->length == 0) {
-                return medianOfSlice(*low);
+
+            bool isOdd = len % 2 == 1;
+            size_t half;
+            double median;
+            if (isOdd) {
+                half = (len-1) / 2;
+                median = ary.data[offset + half];
             } else {
-                low->offset += lengthDecrease;
-                if (medianOfSlice(*low) > medianOfSlice(*high)) {
-                    low.swap(high);
+                half = len / 2;
+                median = (ary.data[offset + half-1] + ary.data[offset + half]) / 2.0;
+            }
+
+            if (element > median) {
+                offset += half;
+                if (isOdd) {
+                    offset += 1;
                 }
             }
+            len = half;
         }
     }
 
     template <typename T>
-    T medianOfTwoSortedArray(const std::vector<T> &a, const std::vector<T> &b) {
-        Slice<T> sliceA { .ptrV = &a, .length = a.size(), .offset = 0 };
-        Slice<T> sliceB { .ptrV = &b, .length = b.size(), .offset = 0 };
+    double medianOfTwoSortedArraySlice(std::shared_ptr<Slice<T>> low, std::shared_ptr<Slice<T>> high) {
+        while (true) {
+            if (low->length > high->length)
+                low.swap(high);
 
-        std::shared_ptr<Slice<T>> ptrA (&sliceA);
-        std::shared_ptr<Slice<T>> ptrB (&sliceB);
+            if (low->length <= 2) {
+                std::array<size_t, 2> insertIndices { 0, 0 };
+                for (size_t i = 0; i < low->length; i++)
+                    insertIndices[i] = rankFloor(low->data[low->offset+i], *high);
 
-        if (medianOfSlice(sliceA) > medianOfSlice(sliceB)) {
-            ptrA.swap(ptrB);
+                size_t M = low->length + high->length;
+                std::array<size_t, 2> targetIndices { 0, 0 };
+                size_t targetIndicesCnt = 0;
+                if (M%2 == 1) {
+                    targetIndices[targetIndicesCnt++] = (M-1) / 2;
+                } else {
+                    targetIndices[targetIndicesCnt++] = M/2 - 1;
+                    targetIndices[targetIndicesCnt++] = M/2;
+                }
+
+                std::array<double, 2> medians {0.0, 0.0};
+                size_t medianCnt = 0;
+                for (size_t i = 0; i < targetIndicesCnt; i++) {
+                    size_t targetIdx = targetIndices[i];
+                    bool found = false;
+                    for (int j = low->length-1; j >= 0; j--) {
+                        size_t insertIdx = insertIndices[j];
+                        if (insertIdx == targetIdx) {
+                            medians[medianCnt++] = low->data[low->offset + j];
+                            found = true;
+                            break;
+                        }
+                        if (targetIdx > insertIdx)
+                            targetIdx--;
+                    }
+
+                    if (!found)
+                        medians[medianCnt++] = high->data[high->offset + targetIdx];
+                }
+
+                return (medians[0] + medians[1]) / ((double) medianCnt);
+            }
+
+            if (medianOfSlice(*low) > medianOfSlice(*high))
+                low.swap(high);
+
+            size_t deltaLen;
+
+            deltaLen = (low->length % 2 == 1) ? (low->length - 1) / 2 : low->length / 2 - 1;
+            low->offset += deltaLen;
+            low->length -= deltaLen;
+
+            high->length -= (high->length % 2 == 1) ? (high->length - 1) / 2 : high->length / 2 - 1;;
         }
+    }
+
+    template <typename T>
+    double medianOfTwoSortedArray(std::vector<T> &a, std::vector<T> &b) {
+        auto ptrA = std::make_shared<Slice<T>>();
+        auto ptrB = std::make_shared<Slice<T>>();
+        ptrA->data = a.data();
+        ptrA->length = a.size();
+        ptrA->offset = 0;
+        ptrB->data = b.data();
+        ptrB->length = b.size();
+        ptrB->offset = 0;
 
         return medianOfTwoSortedArraySlice(ptrA, ptrB);
     }
 
-    void generateTestCode() {
-        for (size_t leftSize = 0; leftSize <= 4; leftSize++) {
-            for (size_t rightSize = 0; rightSize <= 4; rightSize++) {
 
-            }
-        }
-    }
 }
 
 #endif //DATASTRUCTUREIMPLEMENTATIONS_MEDIANOFTWOSORTEDARRAY_HPP
