@@ -6,7 +6,6 @@
 
 
 int main() {
-    Algorithm::MiniMax::test();
 
     return 0;
 }
