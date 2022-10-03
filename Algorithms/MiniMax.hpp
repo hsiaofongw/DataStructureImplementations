@@ -26,6 +26,26 @@ namespace Algorithm::MiniMax {
     // 简单来说，当分数为 +Infinity 时，可以认为红方胜利，当分数为 -Infinity 时，可以认为蓝方胜利。
     enum class PlayerColor { RED, BLUE, TBD };
 
+    namespace WinEigenVectorsImplDetail {
+        constexpr  uint16_t xBase = 0b111;
+        constexpr  uint16_t yBase = 0b1001001;
+        constexpr  uint64_t z1Base = 0b100010001;
+        constexpr  uint64_t z2Base = 0b1010100;
+
+        constexpr uint16_t x (xBase);
+        constexpr uint16_t x1 (xBase << 3);
+        constexpr uint16_t x2 (xBase << 6);
+        constexpr uint16_t y (yBase);
+        constexpr uint16_t y1 (yBase << 1);
+        constexpr uint16_t y2 (yBase << 2);
+        constexpr uint16_t z1 (z1Base);
+        constexpr uint16_t z2 (z2Base);
+
+        constexpr uint16_t winEigenVectors[] = { x, x1, x2, y, y1, y2, z1, z2 };
+    }
+
+    using WinEigenVectorsImplDetail::winEigenVectors;
+
     // 玩家信息描述符
     struct Player {
         Player( ) : color(PlayerColor::TBD) { }
@@ -40,17 +60,30 @@ namespace Algorithm::MiniMax {
     };
 
     class Board {
+    private:
+
         using BoardBitMap = std::unordered_map<uint8_t, std::unordered_map<uint8_t, PlayerColor>>;
         using FreeSlots = std::unordered_map<uint8_t, std::unordered_set<uint8_t>>;
         using MoveDescriptor = std::tuple<uint8_t, uint8_t, PlayerColor>;
+        constexpr static uint8_t nRow = 3;
+        constexpr static uint8_t nCol = 3;
+        BoardBitMap occupied;
+        FreeSlots freeSlots;
+        std::stack<MoveDescriptor> history;
+        std::unordered_map<PlayerColor, std::shared_ptr<Player>> players;
+        using PlayerView = std::bitset<nRow*nCol>;
 
-    private:
-         BoardBitMap occupied;
-         FreeSlots freeSlots;
-         std::stack<MoveDescriptor> history;
-         static constexpr uint8_t nRow = 3;
-         static constexpr uint8_t nCol = 3;
-         std::unordered_map<PlayerColor, std::shared_ptr<Player>> players;
+        // 判赢
+        static bool isWin(PlayerColor color, PlayerView playerView) {
+            return std::any_of(
+                    std::begin(winEigenVectors),
+                    std::end(winEigenVectors),
+                    [&playerView](const auto &eigenVector) -> bool {
+                        PlayerView eigenVector_ = eigenVector;
+                        return eigenVector_ == (eigenVector_ & playerView);
+                    }
+            );
+        }
 
     public:
         Board( ) {
@@ -96,7 +129,6 @@ namespace Algorithm::MiniMax {
 
         // 判赢
         bool hasWin(PlayerColor color) {
-            using PlayerView = std::bitset<nCol*nRow>;
             PlayerView playerView;
             for (auto &pair_1 : occupied) {
                 uint8_t i = pair_1.first;
@@ -110,29 +142,7 @@ namespace Algorithm::MiniMax {
                 }
             }
 
-            constexpr static uint16_t xBase = 0b111;
-            constexpr static uint16_t yBase = 0b1001001;
-            constexpr static uint64_t z1Base = 0b100010001;
-            constexpr static uint64_t z2Base = 0b1010100;
-
-            constexpr static PlayerView x (xBase);
-            constexpr static PlayerView x1 (xBase << 3);
-            constexpr static PlayerView x2 (xBase << 6);
-            constexpr static PlayerView y (yBase);
-            constexpr static PlayerView y1 (yBase << 1);
-            constexpr static PlayerView y2 (yBase << 2);
-            constexpr static PlayerView z1 (z1Base);
-            constexpr static PlayerView z2 (z2Base);
-
-            constexpr static PlayerView winEigenVectors[] = { x, x1, x2, y, y1, y2, z1, z2 };
-
-            return std::any_of(
-                std::begin(winEigenVectors),
-                std::end(winEigenVectors),
-                [&playerView](const auto &eigenVector) -> bool {
-                    return eigenVector == (eigenVector & playerView);
-                }
-            );
+            return isWin(color, playerView);
         }
 
         // 从棋盘的左往右、从上往下，寻找第一个空位
@@ -173,12 +183,6 @@ namespace Algorithm::MiniMax {
             return PlayerColor::TBD;
         }
     };
-
-    // MiniMax Algorithm (with Alpha-Beta pruning out of box)
-
-
-
-
 
     template <typename T, typename = void>
     struct has_begin_end : std::false_type {};
