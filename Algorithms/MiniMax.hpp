@@ -20,6 +20,7 @@
 #include <type_traits>
 #include <optional>
 #include <algorithm>
+#include <tuple>
 
 namespace Algorithm::MiniMax {
     // 玩家选边站队情况描述枚举类型，红方总是希望分数越大越好，而蓝方做为红方的抬杠者，总是希望分数越小越好，
@@ -42,6 +43,53 @@ namespace Algorithm::MiniMax {
         constexpr uint16_t z2 (z2Base);
 
         constexpr uint16_t winEigenVectors[] = { x, x1, x2, y, y1, y2, z1, z2 };
+
+        /**
+         * 对 base 对最右边 baseLen 位重复 repeatCount 遍，例如：
+         * repeatCount = 4, base = 0b101, baseLen = 3,
+         * 则输出为：0b101_101_101_101
+         */
+        template <size_t repeatCount, uint64_t base, size_t baseLen>
+        struct repeats : std::integral_constant<
+            uint64_t,
+            ((base << (baseLen * (repeatCount - 1))) | repeats<repeatCount-1, base, baseLen>::value)
+        > {};
+
+        template <uint64_t base, size_t baseLen>
+        struct repeats<1, base, baseLen> : std::integral_constant<uint64_t, base> {};
+
+        template <uint64_t base, size_t baseLen>
+        struct repeats<0, base, baseLen> : std::integral_constant<uint64_t, 0> {};
+
+        /** 输出最右边含 N 个 1 的二进制整数，例如 N = 6, 则输出 0b111_111 */
+        template <size_t N>
+        struct ones : std::integral_constant<uint64_t, ((~((uint64_t)0)) >> (64-N))> {};
+
+        template <size_t NRows, size_t NCols>
+        struct win_eigenvector_rows {
+            constexpr static auto value = std::tuple_cat(
+                std::tuple<uint64_t>(ones<NCols>::value << ( (NRows-1) * NCols ) ),
+                win_eigenvector_rows<NRows-1, NCols>::value
+            );
+        };
+
+        template <size_t NCols>
+        struct win_eigenvector_rows<1, NCols> {
+            constexpr static std::tuple<uint64_t> value = std::tuple<uint64_t>(ones<NCols>::value);
+        };
+
+        template <size_t NRows, size_t NCols, size_t ColIdx = NCols>
+        struct win_eigenvector_cols {
+            constexpr static auto value = std::tuple_cat(
+                std::tuple<uint64_t>(repeats<NRows, (uint64_t) 1, NCols>::value << (ColIdx - 1)),
+                win_eigenvector_cols<NRows, NCols, ColIdx-1>::value
+            );
+        };
+
+        template <size_t NRows, size_t NCols>
+        struct win_eigenvector_cols<NRows, NCols, 1> {
+            constexpr static auto value = std::tuple<uint64_t>(repeats<NRows, (uint64_t) 1, NCols>::value);
+        };
     }
 
     using WinEigenVectorsImplDetail::winEigenVectors;
@@ -59,178 +107,155 @@ namespace Algorithm::MiniMax {
         std::shared_ptr<Player> opponent;
     };
 
-    class Board {
+    template <typename T>
+    concept Integral = std::is_integral_v<T> || std::is_enum_v<T>;
+
+    template <size_t N, Integral CellT, CellT emptyMark>
+    struct BoardData {
+        BoardData(const BoardData<N, CellT, emptyMark> &rhs) : cells(rhs.cells) { }
+        constexpr static CellT emptyMark_ = emptyMark;
+        std::array<CellT, N> cells;
+    };
+
+    template <size_t N, Integral CellT, CellT emptyMark>
+    class MoveIterator {
+        using value_type = BoardData<N, CellT, emptyMark>;
+        using reference = value_type&;
+        using difference_type = std::ptrdiff_t;
+        using self_type_ = MoveIterator<N, CellT, emptyMark>;
+
     private:
+        size_t idx;
+        std::unique_ptr<value_type> boardData_;
+        CellT color;
 
-        using BoardBitMap = std::unordered_map<uint8_t, std::unordered_map<uint8_t, PlayerColor>>;
-        using FreeSlots = std::unordered_map<uint8_t, std::unordered_set<uint8_t>>;
-        using MoveDescriptor = std::tuple<uint8_t, uint8_t, PlayerColor>;
-        constexpr static uint8_t nRow = 3;
-        constexpr static uint8_t nCol = 3;
-        BoardBitMap occupied;
-        FreeSlots freeSlots;
-        std::stack<MoveDescriptor> history;
-        std::unordered_map<PlayerColor, std::shared_ptr<Player>> players;
-        using PlayerView = std::bitset<nRow*nCol>;
-
-        // 判赢
-        static bool isWin(PlayerColor color, PlayerView playerView) {
-            return std::any_of(
-                    std::begin(winEigenVectors),
-                    std::end(winEigenVectors),
-                    [&playerView](const auto &eigenVector) -> bool {
-                        PlayerView eigenVector_ = eigenVector;
-                        return eigenVector_ == (eigenVector_ & playerView);
-                    }
-            );
+        void moveToNext() {
+            size_t prevIdx = idx;
+            ++idx;
+            while (idx < N) {
+                if (boardData_[idx] == emptyMark) {
+                    boardData_[prevIdx] = emptyMark;
+                    boardData_[idx] = color;
+                    break;
+                }
+                ++idx;
+            }
         }
 
     public:
-        Board( ) {
-            auto redPlayer = std::make_shared<Player>(PlayerColor::RED);
-            auto bluePlayer = std::make_shared<Player>(PlayerColor::BLUE);
-            auto nature = std::make_shared<Player>(PlayerColor::TBD);
-            redPlayer->opponent = bluePlayer;
-            bluePlayer->opponent = redPlayer;
-            players[PlayerColor::TBD] = nature;
-            players[PlayerColor::RED] = redPlayer;
-            players[PlayerColor::BLUE] = bluePlayer;
-        }
-
-        ~Board() {
-            for (auto &pair_ : players) {
-                if (auto player = pair_.second) {
-                    if (player->color != PlayerColor::TBD) {
-                        player->opponent = nullptr;
-                        break;
-                    }
-                }
+        MoveIterator(const value_type &boardData, size_t idx, CellT color) :
+            color(color),
+            idx(idx),
+            boardData_(std::make_unique<value_type>(boardData))
+        {
+            if (idx < N) {
+                boardData_[idx] = color;
             }
         }
 
-        // 走子
-        void move(uint8_t i, uint8_t j, PlayerColor color) {
-            freeSlots[i].erase(j);
-            occupied[i][j] = color;
-            history.push(std::tuple (i, j, color));
+        // prefix ++
+        self_type_ &operator++() {
+            moveToNext();
+            return *this;
         }
 
-        // 悔棋
-        void undo() {
-            if (!history.empty()) {
-                auto moveDescriptor = history.top();
-                history.pop();
-                uint i = std::get<0>(moveDescriptor);
-                uint j = std::get<1>(moveDescriptor);
-                freeSlots[i].insert(j);
-                occupied[i].erase(j);
-            }
+        // suffix ++
+        self_type_ operator++(int) {
+            MoveIterator prev (*boardData_, idx, color);
+            moveToNext();
+            return prev;
         }
 
-        // 判赢
-        bool hasWin(PlayerColor color) {
-            PlayerView playerView;
-            for (auto &pair_1 : occupied) {
-                uint8_t i = pair_1.first;
-                for (auto &pair_2 : pair_1.second) {
-                    uint8_t j = pair_2.first;
-                    PlayerColor color_ = pair_2.second;
-                    if (color_ == color) {
-                        uint8_t idx = i * nCol + j;
-                        playerView.set(idx);
-                    }
-                }
-            }
-
-            return isWin(color, playerView);
+        reference getView() {
+           return *boardData_;
         }
 
-        // 从棋盘的左往右、从上往下，寻找第一个空位
-        std::optional<std::tuple<uint8_t, uint8_t>> findFirstFreeSlot() {
-            std::vector<uint8_t> freePosIndices;
-            for (auto &pair_ : freeSlots) {
-                uint8_t i = pair_.first;
-                for (uint8_t j : pair_.second) {
-                    freePosIndices.push_back(i * nCol + j);
-                }
-            }
-
-            if (std::empty(freePosIndices)) {
-                return {};
-            }
-
-            std::sort(freePosIndices.begin(), freePosIndices.end(), std::less<uint8_t> {});
-            uint8_t idx = freePosIndices[0];
-            uint8_t i = idx / nCol;
-            uint8_t j = idx % nCol;
-            return std::tuple ( i, j );
+        reference operator*() {
+            return getView();
         }
 
-        // 获取最近一次走子记录
-        std::optional<MoveDescriptor> getLastMove() {
-            if (history.empty()) {
-                return {};
-            }
-
-            return history.top();
+        bool operator==(self_type_ &rhs) {
+            return idx == rhs.idx;
         }
 
-        // 获取对手阵营信息
-        PlayerColor getOpponentColor(PlayerColor color) {
-            if (auto player = players[color]) {
-                return player->color;
-            }
-            return PlayerColor::TBD;
+        bool operator!=(self_type_ &rhs) {
+            return idx != rhs.idx;
         }
     };
-
-    template <typename T, typename = void>
-    struct has_begin_end : std::false_type {};
 
     template <typename T>
-    struct has_begin_end<T, std::void_t<typename T::begin, typename T::end>> : std::true_type {};
-
-    struct S {
-        using IntVector = std::vector<int>;
-        decltype(std::declval<IntVector>().begin()) begin;
-        decltype(std::declval<IntVector>().end()) end;
+    concept Iterable = requires(T t) {
+        std::input_iterator<decltype(t.begin())>;
+        std::input_iterator<decltype(t.end())>;
     };
 
-    template <typename T, class U>
-    double minimax(
-        const T &boardConfiguration,
-        const Player &currentPlayer,
-        std::function<std::enable_if_t<has_begin_end<U>::value, U&> (const T&, const Player&)> getPossibleMoves,
-        std::function<double (const T&)> staticEvaluate
-    ) {
-        // 初始最佳分数 -Infinity（负无穷大）
-        double bestScore = 0 - std::numeric_limits<double>::infinity();
-        // 初始最差分数 Infinity（正无穷大）
-        double worstScore = std::numeric_limits<double>::infinity();
+    template <typename T> requires std::input_iterator<T>
+    struct MovesContainer {
+        MovesContainer(T &&begin_, T &&end_) : begin_(std::move(begin_)), end_(std::move(end_)) {}
 
-        auto &moves = getPossibleMoves(boardConfiguration, currentPlayer);
-        auto beginIt = std::begin(moves);
-        auto endIt = std::end(moves);
-        std::for_each(beginIt, endIt, [](const auto &element) -> void {
+        T begin_;
+        T end_;
 
-        });
+        T &begin() { return begin_; }
+        T &end() { return end_; }
+    };
 
-        if (currentPlayer.color == PlayerColor::RED) {
-            // 评估当前棋局对于红方选手的效用分数：
-            //
-            // 估分逻辑是这样的：当前，红方已经走了，并且棋局状态是 boardConfiguration, 要评估这样的局面对于红方而言效用分数是多少，
-            // 我们考虑蓝方在接下来的每一种可能走子，我们简单地假定蓝方一定会走对于红方最不利（也就是分最低）的走子，基于这个假设，
-            // 当前局面对于红方的效用分数，就等于接下来蓝方所能作出的对红方最不利的走子导致的局面的得分。
+    template <size_t N>
+    using PlayerView = std::bitset<N>;
 
-        } else if (currentPlayer.color == PlayerColor::BLUE) {
-            // 评估当前棋局对于蓝方选手的效用分数：
-            //
-            // 逻辑和评估红方得分的略有类似：我们可以假定接下来红方会走对自己最有利（从而对蓝方最不利）的走子，
-            // 基于这个假定预测红方接下来会怎么走，然后拿这个预测来算分。
-        } else {
-            std::cerr << "选手战队未确定，无法评估。" << std::endl;
-            return std::numeric_limits<double>::quiet_NaN();
+    template <size_t N, Integral CellT, CellT emptyMark>
+    PlayerView<N> getPlayerView(BoardData<N, CellT, emptyMark> &boardData, CellT color) {
+        PlayerView<N> playerView;
+        size_t cellsCount = std::size(boardData.cells);
+        for (size_t i = 0; i < cellsCount; i++) {
+            if (boardData.cells[i] == color) {
+                playerView.set(i);
+            }
         }
+
+        return playerView;
+    }
+
+    template <size_t NRows, size_t NCols, Integral CellT, CellT emptyMark>
+    bool win(BoardData<NRows*NCols, CellT, emptyMark> &boardData, CellT color) {
+        for (const uint16_t &eigen : winEigenVectors) {
+            std::bitset<NRows*NCols> eigen_ (eigen);
+        }
+    }
+
+    template <size_t N, Integral CellT, CellT emptyMark>
+    MovesContainer<MoveIterator<N, CellT, emptyMark>> getSubsequentMoves(
+        BoardData<N, CellT, emptyMark> &boardData,
+        CellT color,
+        std::unordered_map<CellT, CellT> &opponentColor
+    ) {
+        auto findOpponent = opponentColor.find(color);
+        CellT opponent = findOpponent == opponentColor.end() ? color : *findOpponent;
+        if (opponent == color) {
+            std::cerr << "Can't find opponent." << std::endl;
+        }
+
+
+
+    }
+
+    template <typename ViewT, typename ColorT, Iterable T>
+    double minimax(
+        const ViewT &view,
+        const ColorT &player,
+        std::function<T (const ViewT& view)> getSubsequentMoves
+    ) {
+        T moves = getSubsequentMoves(view);
+        auto begin = moves.begin();
+        auto end = moves.end();
+        for (; begin != end; ++begin) {
+
+        }
+    }
+
+    template <std::input_iterator T>
+    void test(T t) {
+        ++t;
     }
 }
 
