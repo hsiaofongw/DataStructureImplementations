@@ -90,6 +90,38 @@ namespace Algorithm::MiniMax {
         struct win_eigenvector_cols<NRows, NCols, 1> {
             constexpr static auto value = std::tuple<uint64_t>(repeats<NRows, (uint64_t) 1, NCols>::value);
         };
+
+        template <size_t NRows, size_t NCols>
+        struct win_eigenvectors {};
+
+        template <int i_, int j_>
+        struct point_ {
+            constexpr static int i = i_;
+            constexpr static int j = j_;
+        };
+
+        /** i-j==lineIdx 在 [0,maxI]x[0,maxJ] 范围内的起始点，做为迭代的起点 */
+        template <int lineIdx>
+        struct negative_diag_start_point : std::conditional_t<lineIdx >= 0, point_<lineIdx, 0>, point_<0, 0-lineIdx>> {};
+
+        /** 寻找由参数 LineIdx 确定的直线 { (i,j) : i-j == LineIdx } 在 [0,maxI]x[0,maxJ] 区域内的所有整数点 */
+        template <int lineIdx, int maxI, int maxJ, int i = negative_diag_start_point<lineIdx>::i, int j = negative_diag_start_point<lineIdx>::j>
+        struct find_negative_diag_points {
+            constexpr static auto value = std::tuple_cat(
+                find_negative_diag_points<lineIdx, maxI, maxJ, i+1, j+1>::value,
+                std::tuple(point_<i, j>{})
+            );
+        };
+
+        template <int lineIdx, int maxI, int maxJ, int j>
+        struct find_negative_diag_points<lineIdx, maxI, maxJ, maxI+1, j> {
+            constexpr static auto value = std::tuple<>();  // empty tuple, intentional.
+        };
+
+        template <int lineIdx, int maxI, int maxJ, int i>
+        struct find_negative_diag_points<lineIdx, maxI, maxJ, i, maxJ+1> {
+            constexpr static auto value = std::tuple<>();  // empty tuple, intentional.
+        };
     }
 
     using WinEigenVectorsImplDetail::winEigenVectors;
