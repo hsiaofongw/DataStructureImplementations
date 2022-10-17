@@ -37,21 +37,21 @@ concept IntegralElementContainer =
         { std::begin(t) } -> std::same_as<decltype(std::end(t))>;
     };
 
-template <MoveIt T, MoveType MoveT, BoardType BoardT>
-T getOpponentMoves(
-    const MoveT& move,
-    const BoardT& board,
-    const std::function<bool (const MoveT&, BoardT&&)> &isWin
+template <BoardType BoardT, size_t total_size = BoardT::total_size, IntegralElementContainer IntsType>
+double minimax(
+    BoardT&& board,
+    const std::function<IntsType &&(BoardT&&)> &getMoves,
+    const std::function<double (BoardT&&)> &staticEvaluation
 ) {
-    if (isWin) {
-
-    }
-    Color opponent = getOpponentColor(move.getColor());
-}
-
-template <BoardType BoardT, size_t total_size = BoardT::total_size>
-auto minimax(BoardT&& board) {
     std::cout << "total size: " << total_size << std::endl;
+    IntsType&& moves = getMoves(board);
+    auto it = std::begin(moves);
+    auto movesEnd = std::end(moves);
+    if (it == movesEnd) {
+        return staticEvaluation(board);
+    }
+
+    return 0;
 }
 
 struct Board {
